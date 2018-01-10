@@ -1,6 +1,6 @@
-# Garden Terraformer
+# Terraformer
 
-The Garden Terraformer is a tool that can execute Terraform configuration and is designed to run as a pod inside a Kubernetes cluster. The `main.tf`, `variables.tf`, `terraform.tfvars` and `terraform.tfstate` files are expected to be stored as configmaps/secrets and mounted into the pod. The Terraformer is able to run `terraform validate|plan|apply|destroy` and will update the state (configmap) itself by using the available Kubernetes service account.
+The Terraformer is a tool that can execute Terraform configuration and is designed to run as a pod inside a Kubernetes cluster. The `main.tf`, `variables.tf`, `terraform.tfvars` and `terraform.tfstate` files are expected to be stored as configmaps/secrets and mounted into the pod. The Terraformer is able to run `terraform validate|plan|apply|destroy` and will update the state (configmap) itself by using the available Kubernetes service account.
 
 Usually, one will run `terraform validate|plan` within a single pod and `terraform apply|destroy` as a job in order to establish retry logic.
 
@@ -18,7 +18,7 @@ $ cd $GOPATH/src/github.com/hashicorp/terraform
 $ go install ./tools/terraform-bundle
 ```
 
-:warning: Please don't forget to update the `$IMAGE_TAG` variable in the `Makefile` before creating a new release:
+:warning: Please don't forget to update the `VERSION` file before creating a new release:
 
 ```bash
 $ make release
