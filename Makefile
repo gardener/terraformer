@@ -13,10 +13,9 @@
 # limitations under the License.
 
 PROJECT          := garden-terraformer
-VERSION          := v$(shell head -1 Dockerfile | cut -d ':' -f 2)
 REGISTRY         := eu.gcr.io/sap-cloud-platform-dev1
 IMAGE_REPOSITORY := $(REGISTRY)/garden/$(PROJECT)
-IMAGE_TAG        := $(VERSION)-4
+IMAGE_TAG        := $(shell grep -E "FROM [^:]*\:" Dockerfile | cut -d ':' -f 2)-$(shell cat VERSION)
 
 .PHONY: build
 build: docker-image

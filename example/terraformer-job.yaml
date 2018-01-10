@@ -30,7 +30,7 @@ spec:
       activeDeadlineSeconds: 1800
       containers:
       - name: terraform
-        image: eu.gcr.io/sap-cloud-platform-dev1/garden/garden-terraformer:v0.10.8-3
+        image: eu.gcr.io/sap-cloud-platform-dev1/garden/garden-terraformer:0.10.8-0.0.4
         imagePullPolicy: IfNotPresent
         command:
         - sh
