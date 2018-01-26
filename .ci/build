@@ -1,9 +1,28 @@
 #!/usr/bin/env sh
 
 set -e
+set -x
 
 if [ -z "$SOURCE_PATH" ]; then
-  SOURCE_PATH="$(readlink "$(dirname ${0})/..")"
+  SOURCE_PATH="$(readlink -f "$(dirname ${0})/..")"
+else
+  SOURCE_PATH="$(readlink -f "${SOURCE_PATH}")"
 fi
 
+# not every environment features pushd/popd
+export old_pwd="${PWD}"
+
+export GOPATH="${SOURCE_PATH}/go"
+mkdir -p "${GOPATH}"
+cd "${GOPATH}"
+go get github.com/hashicorp/terraform
+cd $GOPATH/src/github.com/hashicorp/terraform
+go install ./tools/terraform-bundle
+export PATH=${PATH}:${GOPATH}/bin
+cd "${old_pwd}"
+
 "${SOURCE_PATH}/scripts/fetch-providers"
+
+if [ ! -z "${BINARY_PATH}" ]; then
+  cp -r ${SOURCE_PATH}/* "${BINARY_PATH}"
+fi
