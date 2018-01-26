@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+set -e
+
+if [ -z "$SOURCE_PATH" ]; then
+  SOURCE_PATH="$(readlink "$(dirname ${0})/..")"
+fi
+
+"${SOURCE_PATH}/scripts/fetch-providers"
