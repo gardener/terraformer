@@ -12,6 +12,9 @@ fi
 # not every environment features pushd/popd
 export old_pwd="${PWD}"
 
+apt update
+apt install -y unzip
+
 export GOPATH="${SOURCE_PATH}/go"
 mkdir -p "${GOPATH}"
 cd "${GOPATH}"
