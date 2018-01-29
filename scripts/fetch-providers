@@ -20,5 +20,11 @@ terraform-bundle \
   -arch=amd64 \
   $(dirname $0)/../terraform-bundle.hcl
 
+if [ ! -z "BINARY_PATH" ]; then
+  outdir_args="-d${BINARY_PATH}"
+else
+  outdir_args=""
+fi
+
 BUNDLE="$(ls -t terraform*.zip | head -1)"
-unzip $BUNDLE
+unzip ${outdir_args} $BUNDLE
