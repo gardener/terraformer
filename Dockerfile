@@ -12,9 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM hashicorp/terraform:0.10.8
+FROM alpine:3.7
 
-RUN apk add --update curl bash
+ENV TF_VERSION=0.10.8
+ENV TF_DEV=true
+ENV TF_RELEASE=true
+
+WORKDIR /
+
+RUN apk add --update curl bash && \
+    curl https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip > terraform_${TF_VERSION}_linux_amd64.zip && \
+    unzip terraform_${TF_VERSION}_linux_amd64.zip -d /bin && \
+    rm -f terraform_${TF_VERSION}_linux_amd64.zip
 
 ADD ./terraform.sh /terraform.sh
 ADD ./terraform-provider* /terraform-providers/
