@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PROJECT          := garden-terraformer
-REGISTRY         := eu.gcr.io/sap-cloud-platform-dev1
-IMAGE_REPOSITORY := $(REGISTRY)/garden/$(PROJECT)
-IMAGE_TAG        := $(shell grep -E "TF_VERSION=(.+)" Dockerfile | cut -d '=' -f 2)-$(shell cat VERSION)
+PROJECT          := terraformer
+REGISTRY         := eu.gcr.io/gardener-project/gardener
+IMAGE_REPOSITORY := $(REGISTRY)/$(PROJECT)
+IMAGE_TAG        := $(shell cat VERSION)
 
 .PHONY: build
 build: docker-image
