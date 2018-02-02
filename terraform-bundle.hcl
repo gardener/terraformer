@@ -13,12 +13,12 @@
 # limitations under the License.
 
 terraform {
-  version = "0.10.8"
+  version = "0.11.3"
 }
 
 providers {
   aws       = ["~> 1.0"]
-  azurerm   = ["~> 0.1"]
+  azurerm   = ["~> 1.0"]
   google    = ["~> 1.0"]
   openstack = ["~> 1.0"]
   template  = ["~> 1.0"]

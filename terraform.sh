@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#!/bin/sh
-
 # determine command
 command="${1:-apply}"
 exitcode=1
@@ -101,6 +99,7 @@ else
   if [[ "$command" == "apply" ]]; then
     terraform \
       apply \
+      -auto-approve \
       -parallelism=4 \
       -state=/tf-state-in/terraform.tfstate \
       -state-out=/tf-state-out/terraform.tfstate \
