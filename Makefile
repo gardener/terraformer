@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PROJECT          := terraformer
-REGISTRY         := eu.gcr.io/gardener-project/gardener
-IMAGE_REPOSITORY := $(REGISTRY)/$(PROJECT)
+IMAGE_REPOSITORY := eu.gcr.io/gardener-project/gardener/terraformer
 IMAGE_TAG        := $(shell cat VERSION)
 
 .PHONY: build
-build: docker-image
+build: bundle docker-image bundle-clean
 
 .PHONY: release
-release: bundle docker-image docker-login docker-push bundle-clean
+release: build docker-login docker-push
+
+.PHONY: bundle
+bundle:
+	@.ci/build
 
 .PHONY: docker-image
 docker-image:
@@ -36,12 +38,9 @@ docker-push:
 	@if ! docker images $(IMAGE_REPOSITORY) | awk '{ print $$2 }' | grep -q -F $(IMAGE_TAG); then echo "$(IMAGE_REPOSITORY) version $(IMAGE_TAG) is not yet built. Please run 'make docker-image'"; false; fi
 	@gcloud docker -- push $(IMAGE_REPOSITORY):$(IMAGE_TAG)
 
-.PHONY: bundle
-bundle:
-	@./scripts/fetch-providers
-
 .PHONY: bundle-clean
 bundle-clean:
 	@rm -f terraform-provider*
 	@rm -f terraform
 	@rm -f terraform*.zip
+	@rm -rf bin/

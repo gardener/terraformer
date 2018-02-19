@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -e
 #
 # Copyright 2017 The Gardener Authors.
 #
@@ -19,12 +19,6 @@ terraform-bundle \
   -os=linux \
   -arch=amd64 \
   $(dirname $0)/../terraform-bundle.hcl
-
-if [ ! -z "BINARY_PATH" ]; then
-  outdir_args="-d${BINARY_PATH}"
-else
-  outdir_args=""
-fi
 
 BUNDLE="$(ls -t terraform*.zip | head -1)"
 unzip ${outdir_args} $BUNDLE
