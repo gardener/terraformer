@@ -24,13 +24,16 @@ mkdir /tf-state-out
 terraform init -plugin-dir=/terraform-providers /tf
 # workaround for `terraform init`; required to make `terraform validate` work (plugin_path file ignored?)
 cp -r /terraform-providers/* .terraform/plugins/linux_amd64/.
+# copy input terraform state into another directory because it's mounted as configmap (read-only filesystem) and terraform will try to write onto that fs
+mkdir -p /tf-state-tmp
+cp /tf-state-in/* /tf-state-tmp
 
 function end_execution() {
   # Delete trap handler to avoid recursion
   trap - HUP QUIT PIPE INT TERM EXIT
 
   # check whether the terraform state has changed
-  if diff /tf-state-in/terraform.tfstate /tf-state-out/terraform.tfstate 1> /dev/null; then # passes (returns 0) if there is no diff
+  if diff /tf-state-tmp/terraform.tfstate /tf-state-out/terraform.tfstate 1> /dev/null; then # passes (returns 0) if there is no diff
     # indicate success (exit code gets lost as the surrounding command pipes this script through 'tee')
     echo -e "\nNothing to do."
     if [[ $exitcode -eq 0 ]]; then
@@ -86,7 +89,7 @@ if [[ "$command" == "validate" ]]; then
       plan \
       -parallelism=4 \
       -detailed-exitcode \
-      -state=/tf-state-in/terraform.tfstate \
+      -state=/tf-state-tmp/terraform.tfstate \
       -var-file=/tfvars/terraform.tfvars \
       /tf
   else
@@ -101,7 +104,7 @@ else
       apply \
       -auto-approve \
       -parallelism=4 \
-      -state=/tf-state-in/terraform.tfstate \
+      -state=/tf-state-tmp/terraform.tfstate \
       -state-out=/tf-state-out/terraform.tfstate \
       -var-file=/tfvars/terraform.tfvars \
       /tf
@@ -111,7 +114,7 @@ else
       destroy \
       -force \
       -parallelism=4 \
-      -state=/tf-state-in/terraform.tfstate \
+      -state=/tf-state-tmp/terraform.tfstate \
       -state-out=/tf-state-out/terraform.tfstate \
       -var-file=/tfvars/terraform.tfvars \
       /tf
