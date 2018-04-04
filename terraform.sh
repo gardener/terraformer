@@ -26,7 +26,7 @@ PATH_STATE_OUT="$DIR_STATE_OUT/terraform.tfstate"
 PATH_VARIABLES="$DIR_VARIABLES/terraform.tfvars"
 
 PATH_CACERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-NAMESPACE"$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
+NAMESPACE="$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
 TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
 BASE_URL="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT_HTTPS"
 
@@ -76,7 +76,7 @@ function end_execution() {
       --header "Authorization: Bearer $TOKEN" \
       --header "Accept: application/yaml" \
       --request GET \
-      "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > "$PATH_STATE_CONFIG_MAP.put"
+      "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > "$DIR_STATE_OUT/$TF_STATE_CONFIG_MAP_NAME.put"
 
     sed -i -n 's/^    //gp' "$DIR_STATE_OUT/$TF_STATE_CONFIG_MAP_NAME.put"
     if diff "$PATH_STATE_OUT" "$DIR_STATE_OUT/$TF_STATE_CONFIG_MAP_NAME.put" 1> /dev/null; then # passes (returns 0) if there is no diff
