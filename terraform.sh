@@ -129,7 +129,7 @@ else
   elif [[ "$command" == "destroy" ]]; then
     terraform \
       destroy \
-      -force \
+      -auto-approve \
       -parallelism=4 \
       -state="$PATH_STATE_IN" \
       -state-out="$PATH_STATE_OUT" \

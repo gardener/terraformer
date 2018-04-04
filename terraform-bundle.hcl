@@ -13,7 +13,7 @@
 # limitations under the License.
 
 terraform {
-  version = "0.11.3"
+  version = "0.11.5"
 }
 
 providers {
