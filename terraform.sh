@@ -20,7 +20,7 @@ DIR_STATE_OUT="/tf-state-out"
 DIR_VARIABLES="/tfvars"
 DIR_PROVIDERS="/terraform-providers"
 
-PATH_STATE_CONFIG_MAP="$PATH_STATE_CONFIG_MAP"
+PATH_STATE_CONFIG_MAP="$DIR_STATE_OUT/$TF_STATE_CONFIG_MAP_NAME"
 PATH_STATE_IN="$DIR_STATE_IN/terraform.tfstate"
 PATH_STATE_OUT="$DIR_STATE_OUT/terraform.tfstate"
 PATH_VARIABLES="$DIR_VARIABLES/terraform.tfvars"
@@ -76,10 +76,10 @@ function end_execution() {
       --header "Authorization: Bearer $TOKEN" \
       --header "Accept: application/yaml" \
       --request GET \
-      "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > "$DIR_STATE_OUT/$TF_STATE_CONFIG_MAP_NAME.put"
+      "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > "$PATH_STATE_CONFIG_MAP.put"
 
-    sed -i -n 's/^    //gp' "$DIR_STATE_OUT/$TF_STATE_CONFIG_MAP_NAME.put"
-    if diff "$PATH_STATE_OUT" "$DIR_STATE_OUT/$TF_STATE_CONFIG_MAP_NAME.put" 1> /dev/null; then # passes (returns 0) if there is no diff
+    sed -i -n 's/^    //gp' "$PATH_STATE_CONFIG_MAP.put"
+    if diff "$PATH_STATE_OUT" "$PATH_STATE_CONFIG_MAP.put" 1> /dev/null; then # passes (returns 0) if there is no diff
       # indicate success (exit code gets lost as the surrounding command pipes this script through 'tee')
       echo -e "\nConfigMap successfully updated with terraform state."
       if [[ $exitcode -eq 0 ]]; then
