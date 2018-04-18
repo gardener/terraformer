@@ -22,4 +22,5 @@ providers {
   google    = ["~> 1.0"]
   openstack = ["~> 1.0"]
   template  = ["~> 1.0"]
+  null      = ["~> 1.0"]
 }
