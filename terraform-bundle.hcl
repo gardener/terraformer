@@ -17,10 +17,10 @@ terraform {
 }
 
 providers {
-  aws       = ["~> 1.0"]
-  azurerm   = ["~> 1.0"]
-  google    = ["~> 1.0"]
-  openstack = ["~> 1.0"]
-  template  = ["~> 1.0"]
-  null      = ["~> 1.0"]
+  aws       = ["1.17.0"]
+  azurerm   = ["1.4.0"]
+  google    = ["1.12.0"]
+  openstack = ["1.4.0"]
+  template  = ["1.0.0"]
+  null      = ["1.0.0"]
 }

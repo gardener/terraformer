@@ -41,8 +41,8 @@ go install ./tools/terraform-bundle
 
 ###############################################################################
 
-cd "${SOURCE_PATH}" 
-"./scripts/fetch-providers"
+cd "${SOURCE_PATH}"
+./scripts/fetch-providers
 if [[ ! -z "${BINARY_PATH}" ]]; then
   cp -r ${SOURCE_PATH}/terraform-provider* "${BINARY_PATH}"
 fi
