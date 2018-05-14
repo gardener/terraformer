@@ -21,6 +21,7 @@ providers {
   azurerm   = ["1.4.0"]
   google    = ["1.12.0"]
   openstack = ["1.4.0"]
+  alicloud  = ["1.9.2"]
   template  = ["1.0.0"]
   null      = ["1.0.0"]
 }
