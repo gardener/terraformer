@@ -30,6 +30,33 @@ NAMESPACE="$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
 TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
 BASE_URL="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT_HTTPS"
 
+# exponential backoff functionality
+: ${MAX_TIME_SEC:=1800}
+: ${MAX_BACKOFF_SEC:=30}
+
+function backoff() {
+  t=1
+  start="$(date +%s)"
+
+  while ! "${@}"; do
+    now="$(date +%s)"
+    if [[ $((start + MAX_TIME_SEC)) -le $now ]]; then
+      echo "$(date) Timeout of ${MAX_TIME_SEC}s reached. Aborting"
+      return 1
+    fi
+
+    echo "$(date) Repeating command in $t sec..."
+    sleep $t
+
+    t=$((t * 2))
+    if [[ "$t" -ge "${MAX_BACKOFF_SEC}" ]]; then
+      t=${MAX_BACKOFF_SEC}
+    fi
+  done
+
+  echo "$(date) Command executed successful."
+}
+
 # determine command
 command="${1:-apply}"
 exitcode=1
@@ -60,33 +87,40 @@ function end_execution() {
     # update config map with the new terraform state (see https://stackoverflow.com/questions/30690186/how-do-i-access-the-kubernetes-api-from-within-a-pod-container)
     echo -e "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: $TF_STATE_CONFIG_MAP_NAME\ndata:\n  terraform.tfstate: |" > "$PATH_STATE_CONFIG_MAP"
     cat "$PATH_STATE_OUT" | sed -n 's/^/    /gp' >> "$PATH_STATE_CONFIG_MAP"
-    curl \
-      --silent \
-      --cacert "$PATH_CACERT" \
-      --header "Authorization: Bearer $TOKEN" \
-      --header "Content-Type: application/yaml" \
-      --request PUT \
-      --data-binary @"$PATH_STATE_CONFIG_MAP" \
-      "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > /dev/null
 
-    # validate that the current terraform state is properly reflected in the config map
-    curl \
-      --silent \
-      --cacert "$PATH_CACERT" \
-      --header "Authorization: Bearer $TOKEN" \
-      --header "Accept: application/yaml" \
-      --request GET \
-      "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > "$PATH_STATE_CONFIG_MAP.put"
+    function update_state_configmap() {
+      curl \
+        --silent \
+        --cacert "$PATH_CACERT" \
+        --header "Authorization: Bearer $TOKEN" \
+        --header "Content-Type: application/yaml" \
+        --request PUT \
+        --data-binary @"$PATH_STATE_CONFIG_MAP" \
+        "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > /dev/null
 
-    sed -i -n 's/^    //gp' "$PATH_STATE_CONFIG_MAP.put"
-    if diff "$PATH_STATE_OUT" "$PATH_STATE_CONFIG_MAP.put" 1> /dev/null; then # passes (returns 0) if there is no diff
-      # indicate success (exit code gets lost as the surrounding command pipes this script through 'tee')
-      echo -e "\nConfigMap successfully updated with terraform state."
-      if [[ $exitcode -eq 0 ]]; then
-        touch /success
+      # validate that the current terraform state is properly reflected in the config map
+      curl \
+        --silent \
+        --cacert "$PATH_CACERT" \
+        --header "Authorization: Bearer $TOKEN" \
+        --header "Accept: application/yaml" \
+        --request GET \
+        "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > "$PATH_STATE_CONFIG_MAP.put"
+
+      sed -i -n 's/^    //gp' "$PATH_STATE_CONFIG_MAP.put"
+      if diff "$PATH_STATE_OUT" "$PATH_STATE_CONFIG_MAP.put" 1> /dev/null; then # passes (returns 0) if there is no diff
+        # indicate success (exit code gets lost as the surrounding command pipes this script through 'tee')
+        echo -e "\nConfigMap successfully updated with terraform state."
+        if [[ $exitcode -eq 0 ]]; then
+          touch /success
+        fi
+        return 0
+      else
+        return 1
       fi
-      exit 0
-    else
+    }
+
+    if ! backoff update_state_configmap; then
       # dump terraform state so that we can find it at least in the logs
       echo -e "\nConfigMap could not be updated with terraform state! Dumping state file now to have it in the logs:"
       cat "$PATH_STATE_OUT"
