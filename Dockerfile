@@ -17,6 +17,7 @@ FROM alpine:3.7
 ENV TF_VERSION=0.11.6
 ENV TF_DEV=true
 ENV TF_RELEASE=true
+ENV ZONEINFO=/zone-info/zoneinfo.zip 
 
 WORKDIR /
 
@@ -25,6 +26,7 @@ RUN apk add --update curl bash && \
     unzip terraform_${TF_VERSION}_linux_amd64.zip -d /bin && \
     rm -f terraform_${TF_VERSION}_linux_amd64.zip
 
+ADD ./assets/zoneinfo.zip /zone-info/zoneinfo.zip
 ADD ./terraform.sh /terraform.sh
 ADD ./terraform-provider* /terraform-providers/
 
