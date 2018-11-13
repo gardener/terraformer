@@ -22,7 +22,9 @@ terraformer:
         image: 'golang:1.11.1'
         output_dir: 'binary'
   variants:
-    head-update: ~
+    head-update:
+      traits:
+        draft_release: ~
     pull-request:
       traits:
         pull-request: ~
