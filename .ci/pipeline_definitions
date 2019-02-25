@@ -10,17 +10,9 @@ terraformer:
       publish:
         dockerimages:
           terraformer:
-            inputs:
-              repos:
-                source: ~ # default
-              steps:
-                build: ~
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer'
-    steps:
-      build:
-        image: 'golang:1.11.1'
-        output_dir: 'binary'
+    steps: ~
   variants:
     head-update:
       traits:
