@@ -13,15 +13,15 @@
 # limitations under the License.
 
 terraform {
-  version = "0.11.6"
+  version = "TF_VERSION"
 }
 
 providers {
-  aws       = ["1.17.0"]
-  azurerm   = ["1.4.0"]
-  google    = ["1.12.0"]
-  openstack = ["1.4.0"]
-  alicloud  = ["1.22.0"]
+  aws       = ["1.60.0"]
+  azurerm   = ["1.22.1"]
+  google    = ["1.20.0"]
+  openstack = ["1.16.0"]
+  alicloud  = ["1.31.0"]
   template  = ["1.0.0"]
   null      = ["1.0.0"]
 }
