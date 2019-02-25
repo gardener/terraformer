@@ -25,10 +25,7 @@ PATH_STATE_IN="$DIR_STATE_IN/terraform.tfstate"
 PATH_STATE_OUT="$DIR_STATE_OUT/terraform.tfstate"
 PATH_VARIABLES="$DIR_VARIABLES/terraform.tfvars"
 
-PATH_CACERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 NAMESPACE="$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
-TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
-BASE_URL="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT_HTTPS"
 
 # exponential backoff functionality
 : ${MAX_TIME_SEC:=1800}
@@ -64,7 +61,7 @@ exitcode=1
 mkdir -p "$DIR_STATE_IN"
 mkdir -p "$DIR_STATE_OUT"
 
-# required to initialize the AWS provider plugin (since v0.10.0, see https://www.terraform.io/upgrade-guides/0-10.html)
+# required to initialize the provider plugins
 terraform init -plugin-dir="$DIR_PROVIDERS" /tf
 # workaround for `terraform init`; required to make `terraform validate` work (plugin_path file ignored?)
 cp -r "$DIR_PROVIDERS"/* .terraform/plugins/linux_amd64/.
@@ -84,30 +81,23 @@ function end_execution() {
     fi
     exit 0
   else
-    # update config map with the new terraform state (see https://stackoverflow.com/questions/30690186/how-do-i-access-the-kubernetes-api-from-within-a-pod-container)
+    # update config map with the new terraform state
     echo -e "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: $TF_STATE_CONFIG_MAP_NAME\ndata:\n  terraform.tfstate: |" > "$PATH_STATE_CONFIG_MAP"
     cat "$PATH_STATE_OUT" | sed -n 's/^/    /gp' >> "$PATH_STATE_CONFIG_MAP"
 
     function update_state_configmap() {
-      curl \
-        --silent \
-        --cacert "$PATH_CACERT" \
-        --header "Authorization: Bearer $TOKEN" \
-        --header "Content-Type: application/yaml" \
-        --request PUT \
-        --data-binary @"$PATH_STATE_CONFIG_MAP" \
-        "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > /dev/null
+      kubectl \
+        apply \
+        -f "$PATH_STATE_CONFIG_MAP" \
+        > /dev/null
 
       # validate that the current terraform state is properly reflected in the config map
-      curl \
-        --silent \
-        --cacert "$PATH_CACERT" \
-        --header "Authorization: Bearer $TOKEN" \
-        --header "Accept: application/yaml" \
-        --request GET \
-        "$BASE_URL/api/v1/namespaces/$NAMESPACE/configmaps/$TF_STATE_CONFIG_MAP_NAME" > "$PATH_STATE_CONFIG_MAP.put"
+      kubectl \
+        --namespace="$NAMESPACE" \
+        get configmap "$TF_STATE_CONFIG_MAP_NAME" \
+        --output="jsonpath={.data['terraform\.tfstate']}" \
+        > "$PATH_STATE_CONFIG_MAP.put"
 
-      sed -i -n 's/^    //gp' "$PATH_STATE_CONFIG_MAP.put"
       if diff "$PATH_STATE_OUT" "$PATH_STATE_CONFIG_MAP.put" 1> /dev/null; then # passes (returns 0) if there is no diff
         # indicate success (exit code gets lost as the surrounding command pipes this script through 'tee')
         echo -e "\nConfigMap successfully updated with terraform state."

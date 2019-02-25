@@ -5,6 +5,7 @@ WORKDIR /tmp/terraformer
 COPY . .
 
 RUN export TF_VERSION=$(cat /tmp/terraformer/TF_VERSION) && \
+    export KUBECTL_VERSION=$(cat /tmp/terraformer/KUBECTL_VERSION) && \
     apt-get update && \
     apt-get install -y unzip && \
     # install terraform and needed provider plugins
@@ -13,7 +14,10 @@ RUN export TF_VERSION=$(cat /tmp/terraformer/TF_VERSION) && \
     cd /go/src/github.com/hashicorp/terraform && \
     go install ./tools/terraform-bundle && \
     cd /tmp/terraformer && \
-    ./scripts/fetch-providers
+    ./scripts/fetch-providers && \
+    # install kubectl binary
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
+    chmod +x ./kubectl
 
 #############   terraformer      #############
 FROM alpine:3.8 AS base
@@ -26,6 +30,7 @@ ENV TF_DEV=true
 ENV TF_RELEASE=true
 ENV ZONEINFO=/zone-info/zoneinfo.zip
 
+COPY --from=builder /tmp/terraformer/kubectl /bin/kubectl
 COPY --from=builder /tmp/terraformer/terraform /bin/terraform
 COPY --from=builder /tmp/terraformer/terraform-provider* /terraform-providers/
 
