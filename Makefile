@@ -16,14 +16,10 @@ IMAGE_REPOSITORY := eu.gcr.io/gardener-project/gardener/terraformer
 IMAGE_TAG        := $(shell cat VERSION)
 
 .PHONY: build
-build: bundle docker-image bundle-clean
+build: docker-image bundle-clean
 
 .PHONY: release
 release: build docker-login docker-push
-
-.PHONY: bundle
-bundle:
-	@.ci/build
 
 .PHONY: docker-image
 docker-image:
