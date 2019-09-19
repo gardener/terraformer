@@ -22,19 +22,17 @@ RUN export TF_VERSION=$(cat /tmp/terraformer/TF_VERSION) && \
 #############   terraformer      #############
 FROM alpine:3.8 AS base
 
-RUN apk add --update bash curl
+RUN apk add --update bash curl tzdata
 
 WORKDIR /
 
 ENV TF_DEV=true
 ENV TF_RELEASE=true
-ENV ZONEINFO=/zone-info/zoneinfo.zip
 
 COPY --from=builder /tmp/terraformer/kubectl /bin/kubectl
 COPY --from=builder /tmp/terraformer/terraform /bin/terraform
 COPY --from=builder /tmp/terraformer/terraform-provider* /terraform-providers/
 
-ADD ./assets/zoneinfo.zip /zone-info/zoneinfo.zip
 ADD ./terraform.sh /terraform.sh
 
 CMD exec /terraform.sh
