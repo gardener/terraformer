@@ -87,7 +87,7 @@ function end_execution() {
 
     function update_state_configmap() {
       kubectl \
-        apply \
+        replace \
         -f "$PATH_STATE_CONFIG_MAP" \
         > /dev/null
 
