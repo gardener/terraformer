@@ -122,7 +122,6 @@ function end_execution() {
 if [[ "$command" == "validate" ]]; then
   terraform \
     validate \
-    -check-variables=true \
     -var-file="$PATH_VARIABLES" \
     /tf
   if [[ "$?" == "0" ]]; then
