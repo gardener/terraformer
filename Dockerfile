@@ -15,6 +15,7 @@ RUN export TF_VERSION=$(cat /tmp/terraformer/TF_VERSION) && \
     go install ./tools/terraform-bundle && \
     cd /tmp/terraformer && \
     ./scripts/fetch-providers && \
+    ./scripts/fetch-custom-nsxt && \
     # install kubectl binary
     curl -LO https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
     chmod +x ./kubectl
