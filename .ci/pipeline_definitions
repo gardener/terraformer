@@ -27,3 +27,7 @@ terraformer:
         release:
           nextversion: 'bump_minor'
         component_descriptor: ~
+        publish:
+          dockerimages:
+            terraformer:
+              tag_as_latest: true
