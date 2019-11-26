@@ -1,5 +1,5 @@
 #############      builder       #############
-FROM golang:1.11.5 AS builder
+FROM golang:1.12.13 AS builder
 
 WORKDIR /tmp/terraformer
 COPY . .
@@ -20,7 +20,7 @@ RUN export TF_VERSION=$(cat /tmp/terraformer/TF_VERSION) && \
     chmod +x ./kubectl
 
 #############   terraformer      #############
-FROM alpine:3.8 AS base
+FROM alpine:3.10.3 AS base
 
 RUN apk add --update bash curl tzdata
 
