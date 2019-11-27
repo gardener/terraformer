@@ -26,4 +26,5 @@ providers {
   packet      = ["2.3.0"]
   template    = ["2.1.2"]
   null        = ["2.1.2"]
+  nsxt        = ["1.1.2"]
 }
