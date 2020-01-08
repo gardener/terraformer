@@ -19,8 +19,8 @@ terraform {
 providers {
   aws         = ["2.26.0"]
   azurerm     = ["1.33.1"]
-  google      = ["2.14.0"]
-  google-beta = ["2.14.0"]
+  google      = ["3.4.0"]
+  google-beta = ["3.4.0"]
   openstack   = ["1.21.1"]
   alicloud    = ["1.55.2"]
   packet      = ["2.3.0"]
