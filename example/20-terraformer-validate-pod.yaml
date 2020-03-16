@@ -25,9 +25,8 @@ spec:
     image: eu.gcr.io/gardener-project/gardener/terraformer:latest
     imagePullPolicy: IfNotPresent
     command:
-    - sh
-    - -c
-    - sh /terraform.sh validate
+    - /terraformer.sh
+    - validate
     env:
     - name: TF_STATE_CONFIG_MAP_NAME
       value: some-name.infra.tf-state
