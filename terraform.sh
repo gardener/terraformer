@@ -14,15 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DIR_STATE_CONFIG_MAP="/tf-state-in"
-DIR_STATE_IN="/tf-state-copy"
-DIR_STATE_OUT="/tf-state-out"
+DIR_STATE_IN="/tfstate"
+DIR_STATE_OUT="/tfstate-out"
+DIR_CONFIGURATION="/tf"
 DIR_VARIABLES="/tfvars"
 DIR_PROVIDERS="/terraform-providers"
+DIR_PLUGIN_BINARIES=".terraform/plugins/linux_amd64"
 
 PATH_STATE_CONFIG_MAP="$DIR_STATE_OUT/$TF_STATE_CONFIG_MAP_NAME"
 PATH_STATE_IN="$DIR_STATE_IN/terraform.tfstate"
 PATH_STATE_OUT="$DIR_STATE_OUT/terraform.tfstate"
+PATH_CONFIGURATION_MAINTF="$DIR_CONFIGURATION/main.tf"
+PATH_CONFIGURATION_VARIABLESTF="$DIR_CONFIGURATION/variables.tf"
 PATH_VARIABLES="$DIR_VARIABLES/terraform.tfvars"
 
 NAMESPACE="$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
@@ -58,16 +61,46 @@ function backoff() {
 command="${1:-apply}"
 exitcode=1
 
+mkdir -p "$DIR_CONFIGURATION"
+mkdir -p "$DIR_VARIABLES"
 mkdir -p "$DIR_STATE_IN"
 mkdir -p "$DIR_STATE_OUT"
 
-# required to initialize the provider plugins
-terraform init -plugin-dir="$DIR_PROVIDERS" /tf
-# workaround for `terraform init`; required to make `terraform validate` work (plugin_path file ignored?)
-cp -r "$DIR_PROVIDERS"/* .terraform/plugins/linux_amd64/.
-# copy input terraform state into another directory because it's mounted as configmap (read-only filesystem) and terraform will try to write onto that fs
-cp "$DIR_STATE_CONFIG_MAP"/* "$DIR_STATE_IN"
+# live lookup of terraform resources stored in configmaps
+echo "Fetching configmap $NAMESPACE/$TF_CONFIGURATION_CONFIG_MAP_NAME and storing data in $PATH_CONFIGURATION_MAINTF..."
+kubectl \
+  --namespace="$NAMESPACE" \
+  get configmap "$TF_CONFIGURATION_CONFIG_MAP_NAME" \
+  --output="jsonpath={.data['main\.tf']}" \
+  > "$PATH_CONFIGURATION_MAINTF"
 
+echo "Fetching configmap $NAMESPACE/$TF_CONFIGURATION_CONFIG_MAP_NAME and storing data in $PATH_CONFIGURATION_VARIABLESTF..."
+kubectl \
+  --namespace="$NAMESPACE" \
+  get configmap "$TF_CONFIGURATION_CONFIG_MAP_NAME" \
+  --output="jsonpath={.data['variables\.tf']}" \
+  > "$PATH_CONFIGURATION_VARIABLESTF"
+
+echo "Fetching secret $NAMESPACE/$TF_VARIABLES_SECRET_NAME and storing data in $PATH_VARIABLES..."
+kubectl \
+  --namespace="$NAMESPACE" \
+  get secret "$TF_VARIABLES_SECRET_NAME" \
+  --output="jsonpath={.data['terraform\.tfvars']}" | \
+  base64 -d > "$PATH_VARIABLES"
+
+echo "Fetching configmap $NAMESPACE/$TF_STATE_CONFIG_MAP_NAME and storing data in $PATH_STATE_IN..."
+kubectl \
+  --namespace="$NAMESPACE" \
+  get configmap "$TF_STATE_CONFIG_MAP_NAME" \
+  --output="jsonpath={.data['terraform\.tfstate']}" \
+  > "$PATH_STATE_IN"
+
+# required to initialize the provider plugins
+terraform init -plugin-dir="$DIR_PROVIDERS" "$DIR_CONFIGURATION"
+# workaround for `terraform init`; required to make `terraform validate` work (plugin_path file ignored?)
+cp -r "$DIR_PROVIDERS"/* "$DIR_PLUGIN_BINARIES"/.
+
+# graceful shutdown function storing state in the configmap
 function end_execution() {
   # Delete trap handler to avoid recursion
   trap - HUP QUIT PIPE INT TERM EXIT
@@ -134,7 +167,7 @@ if [[ "$command" == "validate" ]]; then
   terraform \
     validate \
     -var-file="$PATH_VARIABLES" \
-    /tf
+    "$DIR_CONFIGURATION"
   if [[ "$?" == "0" ]]; then
     terraform \
       plan \
@@ -142,7 +175,7 @@ if [[ "$command" == "validate" ]]; then
       -detailed-exitcode \
       -state="$PATH_STATE_IN" \
       -var-file="$PATH_VARIABLES" \
-      /tf
+      "$DIR_CONFIGURATION"
   else
     exit $?
   fi
@@ -161,7 +194,7 @@ else
       -state="$PATH_STATE_IN" \
       -state-out="$PATH_STATE_OUT" \
       -var-file="$PATH_VARIABLES" \
-      /tf &
+      "$DIR_CONFIGURATION" &
     TF_PID=$!
     wait $TF_PID
     exitcode=$?
@@ -173,7 +206,7 @@ else
       -state="$PATH_STATE_IN" \
       -state-out="$PATH_STATE_OUT" \
       -var-file="$PATH_VARIABLES" \
-      /tf &
+      "$DIR_CONFIGURATION" &
     TF_PID=$!
     wait $TF_PID
     exitcode=$?
