@@ -28,27 +28,14 @@ spec:
     - /terraformer.sh
     - validate
     env:
+    - name: TF_CONFIGURATION_CONFIG_MAP_NAME
+      value: some-name.infra.tf-config
     - name: TF_STATE_CONFIG_MAP_NAME
       value: some-name.infra.tf-state
+    - name: TF_VARIABLES_SECRET_NAME
+      value: some-name.infra.tf-vars
     resources:
       requests:
         cpu: 100m
-    volumeMounts:
-    - mountPath: /tf
-      name: tf
-    - mountPath: /tfvars
-      name: tfvars
-    - mountPath: /tf-state-in
-      name: tfstate
   restartPolicy: Never
   terminationGracePeriodSeconds: 30
-  volumes:
-  - name: tf
-    configMap:
-      name: some-name.infra.tf-config
-  - name: tfvars
-    secret:
-      secretName: some-name.infra.tf-vars
-  - name: tfstate
-    configMap:
-      name: some-name.infra.tf-state
