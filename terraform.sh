@@ -72,6 +72,17 @@ function end_execution() {
   # Delete trap handler to avoid recursion
   trap - HUP QUIT PIPE INT TERM EXIT
 
+  if [ -n "$TF_PID" ] && kill -0 "$TF_PID" &>/dev/null; then
+    echo "$(date) Sending SIGTERM to terraform process $TF_PID."
+    kill -SIGTERM $TF_PID
+    echo "$(date) Waiting for terraform process $TF_PID to complete..."
+    if wait $TF_PID; then
+      echo "$(date) Terraform process $TF_PID completed."
+    else
+      echo "$(date) Terraform process $TF_PID exited with a non-zero code."
+    fi
+  fi
+
   # check whether the terraform state has changed
   if [[ ! -f "$PATH_STATE_OUT" ]] || diff "$PATH_STATE_IN" "$PATH_STATE_OUT" 1> /dev/null; then # passes (returns 0) if there is no diff
     # indicate success (exit code gets lost as the surrounding command pipes this script through 'tee')
@@ -139,6 +150,9 @@ else
   # Install trap handler for proper cleanup, summary and result code
   trap "exit 100" HUP QUIT PIPE
   trap end_execution INT TERM EXIT
+
+  TF_PID=
+
   if [[ "$command" == "apply" ]]; then
     terraform \
       apply \
@@ -147,7 +161,9 @@ else
       -state="$PATH_STATE_IN" \
       -state-out="$PATH_STATE_OUT" \
       -var-file="$PATH_VARIABLES" \
-      /tf
+      /tf &
+    TF_PID=$!
+    wait $TF_PID
     exitcode=$?
   elif [[ "$command" == "destroy" ]]; then
     terraform \
@@ -157,7 +173,9 @@ else
       -state="$PATH_STATE_IN" \
       -state-out="$PATH_STATE_OUT" \
       -var-file="$PATH_VARIABLES" \
-      /tf
+      /tf &
+    TF_PID=$!
+    wait $TF_PID
     exitcode=$?
   else
     # Delete trap handler - nothing to do

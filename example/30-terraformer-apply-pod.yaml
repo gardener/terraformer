@@ -25,9 +25,8 @@ spec:
     image: eu.gcr.io/gardener-project/gardener/terraformer:latest
     imagePullPolicy: IfNotPresent
     command:
-    - sh
-    - -c
-    - sh /terraform.sh apply 2>&1; [[ -f /success ]] && exit 0 || exit 1
+    - /terraformer.sh
+    - apply
     env:
     - name: TF_STATE_CONFIG_MAP_NAME
       value: some-name.infra.tf-state
