@@ -21,7 +21,7 @@ providers {
   azurerm     = ["1.44.0"]
   google      = ["3.4.0"]
   google-beta = ["3.4.0"]
-  openstack   = ["1.21.1"]
+  openstack   = ["1.28.0"]
   alicloud    = ["1.84.0"]
   packet      = ["2.3.0"]
   template    = ["2.1.2"]
