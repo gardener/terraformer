@@ -20,6 +20,7 @@ DIR_CONFIGURATION="/tf"
 DIR_VARIABLES="/tfvars"
 DIR_PROVIDERS="/terraform-providers"
 DIR_PLUGIN_BINARIES=".terraform/plugins/linux_amd64"
+DIR_IMPORTS="/terraform-imports"
 
 PATH_STATE_CONFIG_MAP="$DIR_STATE_OUT/$TF_STATE_CONFIG_MAP_NAME"
 PATH_STATE_IN="$DIR_STATE_IN/terraform.tfstate"
@@ -27,6 +28,9 @@ PATH_STATE_OUT="$DIR_STATE_OUT/terraform.tfstate"
 PATH_CONFIGURATION_MAINTF="$DIR_CONFIGURATION/main.tf"
 PATH_CONFIGURATION_VARIABLESTF="$DIR_CONFIGURATION/variables.tf"
 PATH_VARIABLES="$DIR_VARIABLES/terraform.tfvars"
+PATH_IMPORTS="$DIR_IMPORTS/terraform_imports"
+PATH_IMPORT_TMP_STATE_IN="/import_in_tmp_terraform.tfstate"
+PATH_IMPORT_TMP_STATE_OUT="/import_out_tmp_terraform.tfstate"
 
 NAMESPACE="$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
 
@@ -65,6 +69,7 @@ mkdir -p "$DIR_CONFIGURATION"
 mkdir -p "$DIR_VARIABLES"
 mkdir -p "$DIR_STATE_IN"
 mkdir -p "$DIR_STATE_OUT"
+mkdir -p "$DIR_IMPORTS"
 
 # live lookup of terraform resources stored in configmaps
 echo "Fetching configmap $NAMESPACE/$TF_CONFIGURATION_CONFIG_MAP_NAME and storing data in $PATH_CONFIGURATION_MAINTF..."
@@ -80,6 +85,13 @@ kubectl \
   get configmap "$TF_CONFIGURATION_CONFIG_MAP_NAME" \
   --output="jsonpath={.data['variables\.tf']}" \
   > "$PATH_CONFIGURATION_VARIABLESTF"
+
+echo "Fetching configmap $NAMESPACE/$TF_CONFIGURATION_CONFIG_MAP_NAME and storing data in $PATH_IMPORTS..."
+kubectl \
+  --namespace="$NAMESPACE" \
+  get configmap "$TF_CONFIGURATION_CONFIG_MAP_NAME" \
+  --output="jsonpath={.data['imports']}" \
+  > "$PATH_IMPORTS"
 
 echo "Fetching secret $NAMESPACE/$TF_VARIABLES_SECRET_NAME and storing data in $PATH_VARIABLES..."
 kubectl \
@@ -210,6 +222,40 @@ else
     TF_PID=$!
     wait $TF_PID
     exitcode=$?
+  elif [[ "$command" == "import" ]]; then
+    cat $PATH_STATE_IN > $PATH_IMPORT_TMP_STATE_IN
+    while read -r line; do
+      [[ "$line" == '' ]] && continue
+      resource_ref="$(echo $line | cut -d ' ' -f1 | tr -d ' ')"
+      resource_value="$(echo $line | cut -d ' ' -f2 | tr -d ' ')"
+
+      terraform \
+        import \
+        -config="$DIR_CONFIGURATION" \
+        -state="$PATH_IMPORT_TMP_STATE_IN" \
+        -state-out="$PATH_IMPORT_TMP_STATE_OUT" \
+        -var-file="$PATH_VARIABLES" \
+        "$resource_ref" "$resource_value" &
+      TF_PID=$!
+      wait $TF_PID
+      exitcode=$?
+
+      [[ "$exitcode" == "0" ]] && cat $PATH_IMPORT_TMP_STATE_OUT > $PATH_IMPORT_TMP_STATE_IN
+    done < "$PATH_IMPORTS"
+    rm -f $PATH_IMPORT_TMP_STATE_IN
+
+    if [[ -f $PATH_IMPORT_TMP_STATE_OUT ]]; then
+      echo "Patching configmap $NAMESPACE/$TF_CONFIGURATION_CONFIG_MAP_NAME to remove imports as they are applied to state..."
+      kubectl \
+      --namespace="$NAMESPACE" \
+      patch configmap "$TF_CONFIGURATION_CONFIG_MAP_NAME" \
+      --type=json \
+      -p='[{"op": "remove", "path": "/data/imports"}]'
+
+      echo "Write the state containing import(s) for persisting to $PATH_STATE_OUT"
+      cat $PATH_IMPORT_TMP_STATE_OUT > $PATH_STATE_OUT
+      rm -f $PATH_IMPORT_TMP_STATE_OUT
+    fi
   else
     # Delete trap handler - nothing to do
     trap - HUP INT QUIT PIPE TERM EXIT

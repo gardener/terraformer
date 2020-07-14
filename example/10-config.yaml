@@ -43,6 +43,8 @@ data:
       description = "AWS Secret Access Key"
       type        = "string"
     }
+  # imports: |
+  #   aws_route53_record.www Z3ABCDE5FGHIJK.example.com
 
 ---
 apiVersion: v1
