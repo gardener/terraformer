@@ -21,9 +21,9 @@ metadata:
 data:
   main.tf: |
     provider "aws" {
-      access_key = "${var.ACCESS_KEY_ID}"
-      secret_key = "${var.SECRET_ACCESS_KEY}"
-      region     = "us-east-1"
+      access_key = var.ACCESS_KEY_ID
+      secret_key = var.SECRET_ACCESS_KEY
+      region     = "eu-central-1"
     }
 
     resource "aws_route53_record" "www" {
@@ -35,13 +35,13 @@ data:
     }
   variables.tf: |
     variable "ACCESS_KEY_ID" {
-      description = "AWS Access Key ID"
-      type        = "string"
+      description = "AWS Access Key ID of technical user"
+      type        = string
     }
 
     variable "SECRET_ACCESS_KEY" {
-      description = "AWS Secret Access Key"
-      type        = "string"
+      description = "AWS Secret Access Key of technical user"
+      type        = string
     }
 
 ---
