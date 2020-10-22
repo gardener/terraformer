@@ -150,10 +150,6 @@ func (t *Terraformer) execute(command Command) error {
 }
 
 func (t *Terraformer) executeTerraform(ctx context.Context, command Command) error {
-	// TODO: figure out, what to do with these commands:
-	// # workaround for `terraform init`; required to make `terraform validate` work (plugin_path file ignored?)
-	// cp -r "$DIR_PROVIDERS"/* "$DIR_PLUGIN_BINARIES"/.
-
 	log := t.stepLogger("executeTerraform")
 
 	args := []string{string(command)}

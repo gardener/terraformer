@@ -22,11 +22,6 @@ import (
 	"github.com/go-logr/logr"
 )
 
-const (
-	// TODO: still needed?
-	tfPluginsDir = ".terraform/plugins/linux_amd64"
-)
-
 // PathSet carries the set of file paths for terraform files and allows to set different paths in tests
 type PathSet struct {
 	// ConfigDir is the directory to hold the main terraform scripts (`main.tf` and `variables.tf`)
