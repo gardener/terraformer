@@ -222,8 +222,8 @@ func (t *Terraformer) StartFileWatcher(ctx context.Context, wg *sync.WaitGroup) 
 		return err
 	}
 
+	wg.Add(1)
 	go func() {
-		wg.Add(1)
 		defer wg.Done()
 
 		for {
