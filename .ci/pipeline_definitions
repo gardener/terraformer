@@ -12,7 +12,9 @@ terraformer:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer'
             target: terraformer
-    steps: ~
+    steps:
+      verify:
+        image: 'golang:1.15.3'
   jobs:
     head-update:
       traits:
