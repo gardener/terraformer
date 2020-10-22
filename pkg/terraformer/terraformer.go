@@ -59,11 +59,11 @@ func NewTerraformer(config *Config, log logr.Logger, paths *PathSet) (*Terraform
 		paths:  paths,
 	}
 
-	if c, err := client.New(config.RESTConfig, client.Options{}); err != nil {
+	c, err := client.New(config.RESTConfig, client.Options{})
+	if err != nil {
 		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)
-	} else {
-		t.client = c
 	}
+	t.client = c
 
 	return t, nil
 }
@@ -79,14 +79,14 @@ func (t *Terraformer) Run(command Command) error {
 }
 
 func (t *Terraformer) execute(command Command) error {
-	sigintCh := make(chan os.Signal, 1)
-	signal.Notify(sigintCh, syscall.SIGINT, syscall.SIGTERM)
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
 		select {
-		case <-sigintCh:
+		case <-sigCh:
 			t.log.Info("interrupt received")
 			cancel()
 		case <-ctx.Done():

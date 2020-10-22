@@ -263,9 +263,5 @@ func (t *Terraformer) StartFileWatcher(ctx context.Context, wg *sync.WaitGroup) 
 	}()
 
 	log.Info("starting file watcher for state file", "file", t.paths.StatePath)
-	if err := watcher.Add(t.paths.StatePath); err != nil {
-		return err
-	}
-
-	return nil
+	return watcher.Add(t.paths.StatePath)
 }

@@ -27,11 +27,16 @@ type Command string
 
 // known terraform commands
 const (
-	Init     Command = "init"
-	Apply    Command = "apply"
-	Destroy  Command = "destroy"
+	// Init is the terraform `init` command.
+	Init Command = "init"
+	// Apply is the terraform `apply` command.
+	Apply Command = "apply"
+	// Destroy is the terraform `destroy` command.
+	Destroy Command = "destroy"
+	// Validate is the terraform `validate` command.
 	Validate Command = "validate" // TODO: is this still needed?
-	Plan     Command = "plan"
+	// Plan is the terraform `plan` command.
+	Plan Command = "plan"
 )
 
 // supported terraform commands, that can be run as `terraformer <command>`
@@ -50,6 +55,7 @@ type Terraformer struct {
 	client client.Client
 }
 
+// Config holds configuration options for Terraformer.
 type Config struct {
 	// ConfigurationConfigMapName is the name of the ConfigMap that holds the `main.tf` and `variables.tf` files.
 	ConfigurationConfigMapName string
@@ -64,7 +70,7 @@ type Config struct {
 	RESTConfig *rest.Config
 }
 
-// MarshalLogObject implements zapcore.ObjectMarshaler
+// MarshalLogObject implements zapcore.ObjectMarshaler.
 func (c *Config) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 	enc.AddString("configurationConfigMapName", c.ConfigurationConfigMapName)
 	enc.AddString("stateConfigMapName", c.StateConfigMapName)

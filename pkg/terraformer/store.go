@@ -27,6 +27,7 @@ import (
 // KeyNotFoundError is returned from a Store.Read if the store does not contain a value for the requested key.
 type KeyNotFoundError string
 
+// Error implements error.
 func (k KeyNotFoundError) Error() string {
 	return fmt.Sprintf("key %q not found", string(k))
 }
@@ -49,10 +50,12 @@ type ConfigMapStore struct {
 	*corev1.ConfigMap
 }
 
+// Object returns the underlying ConfigMap.
 func (c *ConfigMapStore) Object() controllerutil.Object {
 	return c.ConfigMap
 }
 
+// Read returns a reader for reading the value of the given key in the ConfigMap.
 func (c *ConfigMapStore) Read(key string) (io.Reader, error) {
 	data, ok := c.Data[key]
 	if !ok {
@@ -62,6 +65,7 @@ func (c *ConfigMapStore) Read(key string) (io.Reader, error) {
 	return strings.NewReader(data), nil
 }
 
+// Store reads from the given reader and stores the contents under the given key in the ConfigMap.
 func (c *ConfigMapStore) Store(key string, data io.Reader) error {
 	if c.ConfigMap.Data == nil {
 		c.ConfigMap.Data = make(map[string]string, 1)
@@ -84,10 +88,12 @@ type SecretStore struct {
 	*corev1.Secret
 }
 
+// Object returns the underlying Secret.
 func (s *SecretStore) Object() controllerutil.Object {
 	return s.Secret
 }
 
+// Read returns a reader for reading the value of the given key in the Secret.
 func (s *SecretStore) Read(key string) (io.Reader, error) {
 	data, ok := s.Data[key]
 	if !ok {
@@ -97,6 +103,7 @@ func (s *SecretStore) Read(key string) (io.Reader, error) {
 	return bytes.NewReader(data), nil
 }
 
+// Store reads from the given reader and stores the contents under the given key in the Secret.
 func (s *SecretStore) Store(key string, data io.Reader) error {
 	if s.Secret.Data == nil {
 		s.Secret.Data = make(map[string][]byte, 1)
