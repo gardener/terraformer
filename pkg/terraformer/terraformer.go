@@ -161,8 +161,6 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command) err
 	switch command {
 	case Init:
 		args = append(args, "-plugin-dir="+t.paths.ProvidersDir)
-	case Validate:
-		args = append(args, "-var-file="+t.paths.VarsPath)
 	case Plan:
 		args = append(args, "-var-file="+t.paths.VarsPath, "-parallelism=4", "-detailed-exitcode", "-state="+t.paths.StatePath)
 	case Apply:
