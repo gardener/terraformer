@@ -1,5 +1,5 @@
 #############      golang-base   #############
-FROM golang:1.14.4 AS golang-base
+FROM golang:1.15.3 AS golang-base
 
 #############      base          #############
 FROM golang-base AS base
@@ -29,7 +29,7 @@ COPY . .
 RUN make install
 
 #############   terraformer      #############
-FROM alpine:3.12.0 AS terraformer
+FROM alpine:3.12.1 AS terraformer
 
 RUN apk add --update bash curl tzdata
 
