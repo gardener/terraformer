@@ -8,7 +8,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/gardener/gardener/test/framework"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -17,6 +16,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	runtimelog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/gardener/terraformer/test/utils"
 )
 
 func TestTerraformer(t *testing.T) {
@@ -49,7 +50,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("running cleanup actions")
-	framework.RunCleanupActions()
+	utils.RunCleanupActions()
 	gexec.CleanupBuildArtifacts()
 
 	By("stopping test environment")

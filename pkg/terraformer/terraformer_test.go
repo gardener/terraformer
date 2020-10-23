@@ -11,7 +11,6 @@ import (
 	"os"
 
 	"github.com/gardener/gardener/pkg/utils/test"
-	"github.com/gardener/gardener/test/framework"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
@@ -66,9 +65,9 @@ var _ = Describe("Terraformer", func() {
 		BeforeEach(func() {
 			baseDir, err := ioutil.TempDir("", "tf-test-*")
 
-			var handle framework.CleanupActionHandle
-			handle = framework.AddCleanupAction(func() {
-				defer framework.RemoveCleanupAction(handle)
+			var handle testutils.CleanupActionHandle
+			handle = testutils.AddCleanupAction(func() {
+				defer testutils.RemoveCleanupAction(handle)
 				Expect(os.RemoveAll(baseDir)).To(Succeed())
 			})
 			Expect(err).NotTo(HaveOccurred())

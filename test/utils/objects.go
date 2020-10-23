@@ -7,7 +7,6 @@ package utils
 import (
 	"context"
 
-	"github.com/gardener/gardener/test/framework"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,10 +34,10 @@ func PrepareTestObjects(ctx context.Context, c client.Client) *TestObjects {
 	Expect(ns.Name).NotTo(BeEmpty())
 	o.Namespace = ns.Name
 
-	var handle framework.CleanupActionHandle
-	handle = framework.AddCleanupAction(func() {
+	var handle CleanupActionHandle
+	handle = AddCleanupAction(func() {
 		Expect(client.IgnoreNotFound(o.client.Delete(ctx, ns))).To(Succeed())
-		framework.RemoveCleanupAction(handle)
+		RemoveCleanupAction(handle)
 	})
 
 	// create configuration ConfigMap
