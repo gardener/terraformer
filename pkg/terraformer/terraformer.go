@@ -122,7 +122,7 @@ func (t *Terraformer) execute(command Command) error {
 
 	// initialize terraform plugins
 	if err := t.executeTerraform(ctx, Init); err != nil {
-		return fmt.Errorf("error executing terraform %s: %w", command, err)
+		return fmt.Errorf("error executing terraform %s: %w", Init, err)
 	}
 
 	// execute main terraform command

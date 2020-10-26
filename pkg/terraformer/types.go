@@ -29,7 +29,7 @@ const (
 	Plan Command = "plan"
 )
 
-// supported terraform commands, that can be run as `terraformer <command>`
+// SupportedCommands contains the set of supported terraform commands, that can be run as `terraformer <command>`.
 var SupportedCommands = map[Command]struct{}{
 	Apply:    {},
 	Destroy:  {},

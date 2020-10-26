@@ -20,7 +20,6 @@ import (
 	runtimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gardener/terraformer/pkg/terraformer"
-	"github.com/gardener/terraformer/test/utils"
 	testutils "github.com/gardener/terraformer/test/utils"
 )
 
@@ -34,9 +33,9 @@ var _ = Describe("Terraformer Config", func() {
 	BeforeEach(func() {
 		baseDir, err := ioutil.TempDir("", "tf-test-*")
 
-		var handle utils.CleanupActionHandle
-		handle = utils.AddCleanupAction(func() {
-			defer utils.RemoveCleanupAction(handle)
+		var handle testutils.CleanupActionHandle
+		handle = testutils.AddCleanupAction(func() {
+			defer testutils.RemoveCleanupAction(handle)
 			Expect(os.RemoveAll(baseDir)).To(Succeed())
 		})
 		Expect(err).NotTo(HaveOccurred())
@@ -60,7 +59,7 @@ var _ = Describe("Terraformer Config", func() {
 	})
 
 	AfterEach(func() {
-		utils.RunCleanupActions()
+		testutils.RunCleanupActions()
 	})
 
 	Describe("#FetchConfigAndState", func() {
