@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	runtimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -29,11 +30,6 @@ var (
 
 	// allow redirecting output in tests to GinkgoWriter
 	Stdout, Stderr io.Writer = os.Stdout, os.Stderr
-)
-
-const (
-	continuousStateUpdateTimeout = 5 * time.Minute
-	finalStateUpdateTimeout      = 5 * time.Minute
 )
 
 // NewDefaultTerraformer creates a new Terraformer with the default PathSet and logger.
@@ -55,9 +51,14 @@ func NewTerraformer(config *Config, log logr.Logger, paths *PathSet) (*Terraform
 	}
 	t.client = c
 
+	t.stateUpdateQueue = workqueue.NewNamedRateLimitingQueue(workqueue.NewItemExponentialFailureRateLimiter(10*time.Millisecond, 5*time.Minute), "state-update")
+	// use buffered channel, to make sure we don't miss the signal
+	t.finalStateUpdateSucceeded = make(chan struct{}, 1)
+
 	return t, nil
 }
 
+// Run starts to terraformer execution with the given terraform command.
 func (t *Terraformer) Run(command Command) error {
 	if _, ok := SupportedCommands[command]; !ok {
 		return fmt.Errorf("terraform command %q is not supported", command)
@@ -68,7 +69,10 @@ func (t *Terraformer) Run(command Command) error {
 	return t.execute(command)
 }
 
-func (t *Terraformer) execute(command Command) error {
+// execute is the main function of terraformer and puts all parts together (interacting with the terraform config and
+// state resources on the kubernetes cluster, executing and watching terraform calls, delegating process signals and
+// watching the state file).
+func (t *Terraformer) execute(command Command) (rErr error) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
@@ -91,34 +95,27 @@ func (t *Terraformer) execute(command Command) error {
 		return err
 	}
 
-	var fileWatcherWaitGroup sync.WaitGroup
-	// file watcher should run in background and should only be cancelled when this function returns, i.e. when any
-	// running terraform processes have finished
-	fileWatcherCtx, fileWatcherCancel := context.WithCancel(context.Background())
+	shutdownWorker := t.StartUpdateWorker()
+	defer shutdownWorker()
 
-	// always try to store state once again before exiting
+	// always try to update state ConfigMap one last time before exiting
 	defer func() {
-		// stop file watcher and wait for it to be done before storing state explicitly to avoid conflicts
-		fileWatcherCancel()
-		fileWatcherWaitGroup.Wait()
-
-		log := t.stepLogger("StoreState")
-		log.Info("storing state before exiting")
-
-		// run StoreState in background, ctx might have been cancelled already
-		storeCtx, storeCancel := context.WithTimeout(context.Background(), finalStateUpdateTimeout)
-		defer storeCancel()
-
-		if err := t.StoreState(storeCtx); err != nil {
-			log.Error(err, "failed to store terraform state")
+		err := t.TriggerAndWaitForFinalStateUpdate()
+		if rErr == nil {
+			// make sure, we don't exit with exit code 0, if we were unable to store the state
+			rErr = err
 		}
-		log.Info("successfully stored terraform state")
 	}()
 
-	// continuously update state configmap as soon as state file changes on disk
-	if err := t.StartFileWatcher(fileWatcherCtx, &fileWatcherWaitGroup); err != nil {
+	// start file watcher for state file, that will continuously update state configmap
+	// as soon as state file changes on disk
+	shutdownFileWatcher, err := t.StartFileWatcher()
+	if err != nil {
 		return fmt.Errorf("failed to start state file watcher: %w", err)
 	}
+
+	// stop file watcher and wait for it to be finished
+	defer shutdownFileWatcher()
 
 	// initialize terraform plugins
 	if err := t.executeTerraform(ctx, Init); err != nil {

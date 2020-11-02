@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/workqueue"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -24,7 +25,7 @@ const (
 	// Destroy is the terraform `destroy` command.
 	Destroy Command = "destroy"
 	// Validate is the terraform `validate` command.
-	Validate Command = "validate" // TODO: is this still needed?
+	Validate Command = "validate"
 	// Plan is the terraform `plan` command.
 	Plan Command = "plan"
 )
@@ -43,6 +44,9 @@ type Terraformer struct {
 	log    logr.Logger
 
 	client client.Client
+
+	stateUpdateQueue          workqueue.RateLimitingInterface
+	finalStateUpdateSucceeded chan struct{}
 }
 
 // Config holds configuration options for Terraformer.

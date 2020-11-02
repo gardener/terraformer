@@ -173,7 +173,7 @@ var _ = Describe("Terraformer Config", func() {
 			stateContents := "state from last run"
 			Expect(ioutil.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
 
-			Expect(tf.StoreState(storeCtx)).To(Succeed())
+			Expect(tf.StoreState()).To(Succeed())
 
 			testObjs.Refresh()
 			Expect(testObjs.StateConfigMap.Data).To(HaveKeyWithValue(testutils.StateKey, stateContents))
@@ -184,7 +184,7 @@ var _ = Describe("Terraformer Config", func() {
 			stateContents := "state from last run"
 			Expect(ioutil.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
 
-			Expect(tf.StoreState(storeCtx)).To(Succeed())
+			Expect(tf.StoreState()).To(Succeed())
 
 			testObjs.Refresh()
 			Expect(testObjs.StateConfigMap.Data).To(HaveKeyWithValue(testutils.StateKey, stateContents))
