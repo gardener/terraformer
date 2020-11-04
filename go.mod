@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/gardener/gardener v1.11.1
+	github.com/gardener/gardener v1.12.4
 	github.com/go-logr/logr v0.1.0
 	github.com/google/go-cmp v0.4.1 // indirect
 	github.com/hashicorp/go-multierror v1.0.0

@@ -16,7 +16,7 @@ github.com/evanphx/json-patch
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit
 github.com/fsnotify/fsnotify
-# github.com/gardener/gardener v1.11.1
+# github.com/gardener/gardener v1.12.4
 ## explicit
 github.com/gardener/gardener/.github
 github.com/gardener/gardener/.github/ISSUE_TEMPLATE
@@ -472,6 +472,8 @@ k8s.io/code-generator/cmd/set-gen
 k8s.io/code-generator/pkg/namer
 k8s.io/code-generator/pkg/util
 k8s.io/code-generator/third_party/forked/golang/reflect
+# k8s.io/component-base v0.18.8
+k8s.io/component-base/featuregate
 # k8s.io/gengo v0.0.0-20200413195148-3a45101e95ac
 k8s.io/gengo/args
 k8s.io/gengo/examples/deepcopy-gen/generators
