@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
+	"k8s.io/apimachinery/pkg/util/clock"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/gardener/terraformer/pkg/terraformer"
@@ -94,6 +95,7 @@ var _ = Describe("Terraformer", func() {
 				},
 				zap.New(zap.UseDevMode(true), zap.WriteTo(io.MultiWriter(GinkgoWriter, testStdout))),
 				paths,
+				clock.RealClock{},
 			)
 			Expect(err).NotTo(HaveOccurred())
 		})
@@ -171,7 +173,7 @@ var _ = Describe("Terraformer", func() {
 
 				Eventually(testStderr).Should(gbytes.Say("some terraform error"))
 				Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
-				Eventually(testStdout).Should(gbytes.Say("storing state before exiting"))
+				Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
 				Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
 			})
 		})

@@ -5,17 +5,13 @@
 package terraformer_test
 
 import (
-	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sync"
-	"time"
 
-	. "github.com/gardener/gardener/pkg/utils/test/matchers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/clock"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	runtimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -54,6 +50,7 @@ var _ = Describe("Terraformer Config", func() {
 			},
 			runtimelog.Log,
 			paths,
+			clock.RealClock{},
 		)
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -104,6 +101,16 @@ var _ = Describe("Terraformer Config", func() {
 
 				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("not found")))
 			})
+			It("should fail if main.tf file can't be written to", func() {
+				Expect(ioutil.WriteFile(filepath.Join(paths.ConfigDir, testutils.ConfigMainKey), []byte(""), 0444)).To(Succeed())
+
+				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
+			})
+			It("should fail if variables.tf file can't be written to", func() {
+				Expect(ioutil.WriteFile(filepath.Join(paths.ConfigDir, testutils.ConfigVarsKey), []byte(""), 0444)).To(Succeed())
+
+				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
+			})
 		})
 
 		Context("variables fetching", func() {
@@ -117,6 +124,11 @@ var _ = Describe("Terraformer Config", func() {
 				Expect(testClient.Update(ctx, testObjs.VariablesSecret)).To(Succeed())
 
 				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("not found")))
+			})
+			It("should fail if terraform.tfvars file can't be written to", func() {
+				Expect(ioutil.WriteFile(paths.VarsPath, []byte(""), 0444)).To(Succeed())
+
+				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
 			})
 		})
 
@@ -151,108 +163,24 @@ var _ = Describe("Terraformer Config", func() {
 				Expect(err).NotTo(HaveOccurred(), "state file should be present")
 				Expect(contents).To(BeEmpty(), "state file should be empty")
 			})
-		})
-	})
+			It("should fail if terraform.tfstate file can't be written to", func() {
+				Expect(ioutil.WriteFile(paths.StatePath, []byte(""), 0444)).To(Succeed())
 
-	Describe("#StoreState", func() {
-		var (
-			storeCtx    context.Context
-			storeCancel context.CancelFunc
-		)
+				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
+			})
+			It("should fail if state ConfigMap is not present and terraform.tfstate file can't be written to", func() {
+				Expect(client.IgnoreNotFound(testClient.Delete(ctx, testObjs.StateConfigMap))).To(Succeed())
+				Expect(ioutil.WriteFile(paths.StatePath, []byte(""), 0444)).To(Succeed())
 
-		BeforeEach(func() {
-			storeCtx, storeCancel = context.WithTimeout(ctx, 1*time.Minute)
-			Expect(tf.EnsureTFDirs()).To(Succeed())
-		})
+				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
+			})
+			It("should fail if state key is not present and terraform.tfstate file can't be written to", func() {
+				delete(testObjs.StateConfigMap.Data, testutils.StateKey)
+				Expect(testClient.Update(ctx, testObjs.StateConfigMap)).To(Succeed())
+				Expect(ioutil.WriteFile(paths.StatePath, []byte(""), 0444)).To(Succeed())
 
-		AfterEach(func() {
-			storeCancel()
-		})
-
-		It("should store contents of state file in state ConfigMap", func() {
-			stateContents := "state from last run"
-			Expect(ioutil.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
-
-			Expect(tf.StoreState()).To(Succeed())
-
-			testObjs.Refresh()
-			Expect(testObjs.StateConfigMap.Data).To(HaveKeyWithValue(testutils.StateKey, stateContents))
-		})
-		It("should store contents of state file in new state ConfigMap", func() {
-			Expect(testClient.Delete(ctx, testObjs.StateConfigMap)).To(Succeed())
-
-			stateContents := "state from last run"
-			Expect(ioutil.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
-
-			Expect(tf.StoreState()).To(Succeed())
-
-			testObjs.Refresh()
-			Expect(testObjs.StateConfigMap.Data).To(HaveKeyWithValue(testutils.StateKey, stateContents))
-		})
-	})
-
-	Describe("#StartFileWatcher", func() {
-		var (
-			fileWatcherCtx    context.Context
-			fileWatcherCancel context.CancelFunc
-			wg                sync.WaitGroup
-		)
-
-		BeforeEach(func() {
-			fileWatcherCtx, fileWatcherCancel = context.WithTimeout(ctx, 1*time.Minute)
-			Expect(tf.EnsureTFDirs()).To(Succeed())
-			Expect(tf.FetchConfigAndState(ctx)).To(Succeed())
-		})
-
-		AfterEach(func() {
-			fileWatcherCancel()
-			wg.Wait()
-		})
-
-		It("should not update state ConfigMap if file is not changed", func() {
-			Expect(tf.StartFileWatcher(fileWatcherCtx, &wg)).To(Succeed())
-
-			stateBefore := testObjs.StateConfigMap.DeepCopy()
-
-			Consistently(func() runtime.Object {
-				testObjs.Refresh()
-				return testObjs.StateConfigMap
-			}, 1, 0.1).Should(DeepEqual(stateBefore))
-		})
-
-		It("should not update state ConfigMap if file is deleted", func() {
-			Expect(tf.StartFileWatcher(fileWatcherCtx, &wg)).To(Succeed())
-
-			stateBefore := testObjs.StateConfigMap.DeepCopy()
-
-			Expect(os.Remove(paths.StatePath)).To(Succeed())
-
-			Consistently(func() runtime.Object {
-				testObjs.Refresh()
-				return testObjs.StateConfigMap
-			}, 1, 0.1).Should(DeepEqual(stateBefore))
-		})
-
-		It("should update state ConfigMap if file is changed", func() {
-			Expect(tf.StartFileWatcher(fileWatcherCtx, &wg)).To(Succeed())
-
-			By("update state file the first time")
-			stateContents := "state, generation 1"
-			Expect(ioutil.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
-
-			Eventually(func() map[string]string {
-				testObjs.Refresh()
-				return testObjs.StateConfigMap.Data
-			}, 1, 0.1).Should(HaveKeyWithValue(testutils.StateKey, stateContents))
-
-			By("update state file a second time")
-			stateContents = "state, generation 2"
-			Expect(ioutil.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
-
-			Eventually(func() map[string]string {
-				testObjs.Refresh()
-				return testObjs.StateConfigMap.Data
-			}, 1, 0.1).Should(HaveKeyWithValue(testutils.StateKey, stateContents))
+				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
+			})
 		})
 	})
 })

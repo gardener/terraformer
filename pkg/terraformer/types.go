@@ -7,6 +7,7 @@ package terraformer
 import (
 	"github.com/go-logr/logr"
 	"go.uber.org/zap/zapcore"
+	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/workqueue"
 
@@ -45,8 +46,15 @@ type Terraformer struct {
 
 	client client.Client
 
-	stateUpdateQueue          workqueue.RateLimitingInterface
-	finalStateUpdateSucceeded chan struct{}
+	// StateUpdateQueue is the queue in which file watch events are inserted to trigger a state update.
+	// It is also used for triggering the final state update.
+	StateUpdateQueue workqueue.RateLimitingInterface
+	// FinalStateUpdateSucceeded is a channel over which a value will be send by the state update worker
+	// to signal that the final state update has succeeded and terraformer can safely exit.
+	FinalStateUpdateSucceeded chan struct{}
+
+	// clock allows faking some time operations in tests
+	clock clock.Clock
 }
 
 // Config holds configuration options for Terraformer.

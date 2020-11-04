@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	runtimelog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -34,11 +35,11 @@ var (
 
 // NewDefaultTerraformer creates a new Terraformer with the default PathSet and logger.
 func NewDefaultTerraformer(config *Config) (*Terraformer, error) {
-	return NewTerraformer(config, runtimelog.Log, DefaultPaths())
+	return NewTerraformer(config, runtimelog.Log, DefaultPaths(), clock.RealClock{})
 }
 
 // NewTerraformer creates a new Terraformer with the given options.
-func NewTerraformer(config *Config, log logr.Logger, paths *PathSet) (*Terraformer, error) {
+func NewTerraformer(config *Config, log logr.Logger, paths *PathSet, clock clock.Clock) (*Terraformer, error) {
 	t := &Terraformer{
 		config: config,
 		log:    log,
@@ -51,11 +52,19 @@ func NewTerraformer(config *Config, log logr.Logger, paths *PathSet) (*Terraform
 	}
 	t.client = c
 
-	t.stateUpdateQueue = workqueue.NewNamedRateLimitingQueue(workqueue.NewItemExponentialFailureRateLimiter(10*time.Millisecond, 5*time.Minute), "state-update")
+	t.StateUpdateQueue = workqueue.NewNamedRateLimitingQueue(workqueue.NewItemExponentialFailureRateLimiter(10*time.Millisecond, 5*time.Minute), "state-update")
 	// use buffered channel, to make sure we don't miss the signal
-	t.finalStateUpdateSucceeded = make(chan struct{}, 1)
+	t.FinalStateUpdateSucceeded = make(chan struct{}, 1)
+
+	t.clock = clock
 
 	return t, nil
+}
+
+// InjectClient allows injecting a mock client for some test cases.
+func (t *Terraformer) InjectClient(client client.Client) error {
+	t.client = client
+	return nil
 }
 
 // Run starts to terraformer execution with the given terraform command.
@@ -95,7 +104,7 @@ func (t *Terraformer) execute(command Command) (rErr error) {
 		return err
 	}
 
-	shutdownWorker := t.StartUpdateWorker()
+	shutdownWorker := t.StartStateUpdateWorker()
 	defer shutdownWorker()
 
 	// always try to update state ConfigMap one last time before exiting

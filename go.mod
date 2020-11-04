@@ -6,6 +6,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gardener/gardener v1.12.4
 	github.com/go-logr/logr v0.1.0
+	github.com/golang/mock v1.4.4-0.20200731163441-8734ec565a4d
 	github.com/google/go-cmp v0.4.1 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/onsi/ginkgo v1.14.0
