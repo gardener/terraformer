@@ -31,6 +31,9 @@ var (
 
 	// allow redirecting output in tests to GinkgoWriter
 	Stdout, Stderr io.Writer = os.Stdout, os.Stderr
+
+	// SignalNotify allows mocking signal.Notify in tests
+	SignalNotify = signal.Notify
 )
 
 // NewDefaultTerraformer creates a new Terraformer with the default PathSet and logger.
@@ -83,7 +86,7 @@ func (t *Terraformer) Run(command Command) error {
 // watching the state file).
 func (t *Terraformer) execute(command Command) (rErr error) {
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	SignalNotify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

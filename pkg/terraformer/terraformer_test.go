@@ -6,9 +6,12 @@ package terraformer_test
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"sync"
+	"syscall"
 
 	"github.com/gardener/gardener/pkg/utils/test"
 	. "github.com/onsi/ginkgo"
@@ -32,30 +35,9 @@ var _ = Describe("Terraformer", func() {
 
 	Describe("#Run", func() {
 		var (
-			tf *terraformer.Terraformer
-		)
-
-		BeforeEach(func() {
-			var err error
-			tf, err = terraformer.NewDefaultTerraformer(&terraformer.Config{RESTConfig: restConfig})
-			Expect(err).NotTo(HaveOccurred())
-		})
-
-		It("should fail, if command is not supported", func() {
-			Expect(tf.Run("non-existing")).To(MatchError(ContainSubstring("not supported")))
-		})
-		It("should not allow to run Init directly", func() {
-			Expect(tf.Run(terraformer.Init)).To(MatchError(ContainSubstring("not supported")))
-		})
-		It("should not allow to run Plan directly", func() {
-			Expect(tf.Run(terraformer.Plan)).To(MatchError(ContainSubstring("not supported")))
-		})
-	})
-
-	Describe("#Run", func() {
-		var (
 			fakeTerraform testutils.FakeTerraform
 			tf            *terraformer.Terraformer
+			baseDir       string
 			paths         *terraformer.PathSet
 			testObjs      *testutils.TestObjects
 
@@ -64,7 +46,8 @@ var _ = Describe("Terraformer", func() {
 		)
 
 		BeforeEach(func() {
-			baseDir, err := ioutil.TempDir("", "tf-test-*")
+			var err error
+			baseDir, err = ioutil.TempDir("", "tf-test-*")
 
 			var handle testutils.CleanupActionHandle
 			handle = testutils.AddCleanupAction(func() {
@@ -102,6 +85,26 @@ var _ = Describe("Terraformer", func() {
 
 		AfterEach(func() {
 			resetVars()
+		})
+
+		Context("basic tests without terraform binary", func() {
+			It("should fail, if command is not supported", func() {
+				Expect(tf.Run("non-existing")).To(MatchError(ContainSubstring("not supported")))
+			})
+			It("should not allow to run Init directly", func() {
+				Expect(tf.Run(terraformer.Init)).To(MatchError(ContainSubstring("not supported")))
+			})
+			It("should not allow to run Plan directly", func() {
+				Expect(tf.Run(terraformer.Plan)).To(MatchError(ContainSubstring("not supported")))
+			})
+			It("should fail if directories can't be ensured", func() {
+				Expect(os.Chmod(baseDir, 0400)).To(Succeed())
+				Expect(tf.Run(terraformer.Apply)).To(MatchError(ContainSubstring("permission denied")))
+			})
+			It("should fail if config can't be fetched", func() {
+				Expect(testClient.Delete(ctx, testObjs.ConfigurationConfigMap)).To(Succeed())
+				Expect(tf.Run(terraformer.Apply)).To(MatchError(ContainSubstring("not found")))
+			})
 		})
 
 		Context("successful terraform execution", func() {
@@ -144,14 +147,24 @@ var _ = Describe("Terraformer", func() {
 
 		Context("failed terraform execution", func() {
 			var (
-				resetBinary func()
+				resetBinary        func()
+				overwriteExitCodes testutils.Overwrite
 			)
 
 			BeforeEach(func() {
+				overwriteExitCodes = testutils.OverwriteExitCodeForCommands(
+					"init", "0",
+					"apply", "42",
+					"destroy", "43",
+					"validate", "44",
+				)
+			})
+
+			JustBeforeEach(func() {
 				By("building fake terraform")
 				fakeTerraform = testutils.NewFakeTerraform(
-					testutils.OverwriteExitCode("42"),
 					testutils.OverwriteSleepDuration("50ms"),
+					overwriteExitCodes,
 				)
 
 				resetBinary = test.WithVars(
@@ -163,7 +176,28 @@ var _ = Describe("Terraformer", func() {
 				resetBinary()
 			})
 
-			It("should return exit code from terraform", func() {
+			Context("init fails", func() {
+				BeforeEach(func() {
+					overwriteExitCodes = testutils.OverwriteExitCodeForCommands(
+						"init", "12",
+					)
+				})
+				It("should return exit code from terraform init", func() {
+					err := tf.Run(terraformer.Apply)
+					Expect(err).To(MatchError(ContainSubstring("terraform command failed")))
+
+					var withExitCode utils.WithExitCode
+					Expect(errors.As(err, &withExitCode)).To(BeTrue())
+					Expect(withExitCode.ExitCode()).To(Equal(12))
+
+					Eventually(testStderr).Should(gbytes.Say("some terraform error"))
+					Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
+					Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
+					Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
+				})
+			})
+
+			It("should return exit code from terraform apply", func() {
 				err := tf.Run(terraformer.Apply)
 				Expect(err).To(MatchError(ContainSubstring("terraform command failed")))
 
@@ -176,6 +210,132 @@ var _ = Describe("Terraformer", func() {
 				Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
 				Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
 			})
+			It("should return exit code from terraform destroy", func() {
+				err := tf.Run(terraformer.Destroy)
+				Expect(err).To(MatchError(ContainSubstring("terraform command failed")))
+
+				var withExitCode utils.WithExitCode
+				Expect(errors.As(err, &withExitCode)).To(BeTrue())
+				Expect(withExitCode.ExitCode()).To(Equal(43))
+
+				Eventually(testStderr).Should(gbytes.Say("some terraform error"))
+				Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
+				Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
+				Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
+			})
+			It("should return exit code from terraform validate", func() {
+				err := tf.Run(terraformer.Validate)
+				Expect(err).To(MatchError(ContainSubstring("terraform command failed")))
+
+				var withExitCode utils.WithExitCode
+				Expect(errors.As(err, &withExitCode)).To(BeTrue())
+				Expect(withExitCode.ExitCode()).To(Equal(44))
+
+				Eventually(testStderr).Should(gbytes.Say("some terraform error"))
+				Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
+				Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
+				Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
+			})
+
+			Context("validate succeedes, but plan fails", func() {
+				BeforeEach(func() {
+					overwriteExitCodes = testutils.OverwriteExitCodeForCommands(
+						"init", "0",
+						"validate", "0",
+						"plan", "45",
+					)
+				})
+				It("should return exit code from terraform plan", func() {
+					err := tf.Run(terraformer.Validate)
+					Expect(err).To(MatchError(ContainSubstring("terraform command failed")))
+
+					var withExitCode utils.WithExitCode
+					Expect(errors.As(err, &withExitCode)).To(BeTrue())
+					Expect(withExitCode.ExitCode()).To(Equal(45))
+
+					Eventually(testStderr).Should(gbytes.Say("some terraform error"))
+					Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
+					Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
+					Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
+				})
+			})
+		})
+
+		Describe("signal handling", func() {
+			var (
+				signalCh chan<- os.Signal
+
+				resetVars func()
+			)
+
+			BeforeEach(func() {
+				By("building fake terraform")
+				fakeTerraform = testutils.NewFakeTerraform(
+					testutils.OverwriteExitCode("0"),
+					testutils.OverwriteSleepDuration("200ms"),
+				)
+
+				resetVars = test.WithVars(
+					&terraformer.TerraformBinary, fakeTerraform.Path,
+					&terraformer.SignalNotify, func(c chan<- os.Signal, sig ...os.Signal) {
+						Expect(sig).To(ConsistOf(syscall.SIGINT, syscall.SIGTERM))
+
+						signalCh = c
+					},
+				)
+			})
+
+			AfterEach(func() {
+				resetVars()
+			})
+
+			It("should relay SIGINT to terraform process", func(done Done) {
+				var wg sync.WaitGroup
+				wg.Add(2)
+				go func() {
+					wg.Wait()
+					close(done)
+				}()
+
+				go func() {
+					defer GinkgoRecover()
+					Expect(tf.Run(terraformer.Apply)).To(Succeed())
+					wg.Done()
+				}()
+
+				Eventually(testStdout).Should(gbytes.Say("some terraform output"), "should run terraform init")
+				Eventually(testStdout).Should(gbytes.Say("some terraform output"), "should run terraform apply")
+
+				signalCh <- syscall.SIGINT
+				Eventually(testStdout).Should(gbytes.Say(fmt.Sprintf("fake terraform received signal: %s", syscall.SIGINT.String())))
+
+				Eventually(testStdout).Should(gbytes.Say("terraform process finished successfully"))
+				wg.Done()
+			}, 1)
+
+			It("should relay SIGTERM to terraform process", func(done Done) {
+				var wg sync.WaitGroup
+				wg.Add(2)
+				go func() {
+					wg.Wait()
+					close(done)
+				}()
+
+				go func() {
+					defer GinkgoRecover()
+					Expect(tf.Run(terraformer.Apply)).To(Succeed())
+					wg.Done()
+				}()
+
+				Eventually(testStdout).Should(gbytes.Say("some terraform output"), "should run terraform init")
+				Eventually(testStdout).Should(gbytes.Say("some terraform output"), "should run terraform apply")
+
+				signalCh <- syscall.SIGTERM
+				Eventually(testStdout).Should(gbytes.Say(fmt.Sprintf("fake terraform received signal: %s", syscall.SIGINT.String())))
+
+				Eventually(testStdout).Should(gbytes.Say("terraform process finished successfully"))
+				wg.Done()
+			}, 1)
 		})
 	})
 })

@@ -41,11 +41,34 @@ func OverwriteTerraformBinary(path string) Overwrite {
 	}
 }
 
-// OverwriteExitCode returns an overwrite for the exit code var
+// OverwriteExitCode returns an overwrite that configures the binary to always exit with the given code.
 func OverwriteExitCode(code string) Overwrite {
 	return Overwrite{
-		VarPath: "main.exitCode",
+		VarPath: "main.expectedExitCodes",
 		Value:   code,
+	}
+}
+
+// OverwriteExitCodeForCommands returns an overwrite that configures the binary to exit with the given code if it is
+// invoked with the given command. Example usage:
+//	testutils.OverwriteExitCodeForCommands(
+//		"init", "0",
+//		"apply", "42",
+//		"destroy", "43",
+//	),
+func OverwriteExitCodeForCommands(commandAndCodes ...string) Overwrite {
+	if len(commandAndCodes)%2 != 0 {
+		panic(fmt.Errorf("len of commandAndCodes should be even but is %d", len(commandAndCodes)))
+	}
+
+	var combined string
+	for i := 0; i < len(commandAndCodes); i += 2 {
+		combined += commandAndCodes[i] + "=" + commandAndCodes[i+1] + ","
+	}
+
+	return Overwrite{
+		VarPath: "main.expectedExitCodes",
+		Value:   combined,
 	}
 }
 

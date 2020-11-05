@@ -7,14 +7,17 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
 var (
-	exitCode      string
-	sleepDuration string
+	// expectedExitCodes is a list of expected exit codes for the different commands in form `42` or `init=0,apply=42`.
+	expectedExitCodes string
+	sleepDuration     string
 )
 
 // This packages contains a simple program which can be built in tests to mock terraform executions
@@ -23,12 +26,25 @@ func main() {
 	fmt.Println("some terraform output")
 	fmt.Println("args: " + strings.Join(os.Args[1:], " "))
 
-	code, err := strconv.Atoi(exitCode)
-	if err != nil {
-		panic(err)
-	}
+	exitCode := getExpectedExitCode()
 
 	if sleepDuration != "" {
+		done := make(chan struct{})
+		defer close(done)
+
+		// setup signal handler
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+		go func() {
+			select {
+			case s := <-sigCh:
+				fmt.Printf("fake terraform received signal: %s\n", s.String())
+			case <-done:
+			}
+		}()
+
+		// sleep for specified duration
 		duration, err := time.ParseDuration(sleepDuration)
 		if err != nil {
 			panic(err)
@@ -41,8 +57,35 @@ func main() {
 	fmt.Println("finished terraform execution")
 	_, _ = fmt.Fprintln(os.Stderr, "some terraform error")
 
-	if exitCode == "" {
-		os.Exit(0)
+	os.Exit(exitCode)
+}
+
+func getExpectedExitCode() int {
+	if expectedExitCodes == "" {
+		return 0
 	}
-	os.Exit(code)
+	if !strings.Contains(expectedExitCodes, ",") {
+		code, err := strconv.Atoi(expectedExitCodes)
+		if err != nil {
+			panic(err)
+		}
+		return code
+	}
+
+	exitCodes := strings.Split(expectedExitCodes, ",")
+	if len(exitCodes) == 0 || len(os.Args) <= 1 || os.Args[1] == "" {
+		return 0
+	}
+
+	command := os.Args[1]
+	for _, e := range exitCodes {
+		if strings.HasPrefix(e, command+"=") {
+			code, err := strconv.Atoi(strings.TrimPrefix(e, command+"="))
+			if err != nil {
+				panic(err)
+			}
+			return code
+		}
+	}
+	return 0
 }

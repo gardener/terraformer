@@ -22,12 +22,14 @@ import (
 var _ = Describe("Terraformer Config", func() {
 	var (
 		tf       *terraformer.Terraformer
+		baseDir  string
 		paths    *terraformer.PathSet
 		testObjs *testutils.TestObjects
 	)
 
 	BeforeEach(func() {
-		baseDir, err := ioutil.TempDir("", "tf-test-*")
+		var err error
+		baseDir, err = ioutil.TempDir("", "tf-test-*")
 
 		var handle testutils.CleanupActionHandle
 		handle = testutils.AddCleanupAction(func() {
@@ -57,6 +59,16 @@ var _ = Describe("Terraformer Config", func() {
 
 	AfterEach(func() {
 		testutils.RunCleanupActions()
+	})
+
+	Describe("#EnsureDirs", func() {
+		It("should create directories successfully", func() {
+			Expect(tf.EnsureTFDirs()).To(Succeed())
+		})
+		It("should fail if base dir can't be written to", func() {
+			Expect(os.Chmod(baseDir, 0400)).To(Succeed())
+			Expect(tf.EnsureTFDirs()).To(MatchError(ContainSubstring("permission denied")))
+		})
 	})
 
 	Describe("#FetchConfigAndState", func() {

@@ -340,8 +340,9 @@ var _ = Describe("Terraformer State", func() {
 			}()
 
 			go func() {
-				defer wg.Done()
+				defer GinkgoRecover()
 				Expect(tf.TriggerAndWaitForFinalStateUpdate()).To(Succeed())
+				wg.Done()
 			}()
 
 			Eventually(logBuffer).Should(gbytes.Say("processing work item"))
@@ -370,8 +371,9 @@ var _ = Describe("Terraformer State", func() {
 			}()
 
 			go func() {
-				defer wg.Done()
+				defer GinkgoRecover()
 				Expect(tf.TriggerAndWaitForFinalStateUpdate()).To(MatchError(ContainSubstring("timed out waiting for final state update")))
+				wg.Done()
 			}()
 
 			for i := 1; i <= minRetries; i++ {
