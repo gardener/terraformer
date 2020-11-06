@@ -255,7 +255,7 @@ func (t *Terraformer) TriggerAndWaitForFinalStateUpdate() error {
 // situations where the API server is unavailable for over 1h). Maybe the logs can help in such situations to recover
 // the state.
 func (t *Terraformer) LogStateContentsToStdout() error {
-	file, err := os.Open(filepath.Join(t.paths.StateDir, tfStateKey))
+	file, err := os.Open(t.paths.StatePath)
 	if err != nil {
 		return err
 	}

@@ -48,13 +48,13 @@ var _ = Describe("Terraformer", func() {
 		BeforeEach(func() {
 			var err error
 			baseDir, err = ioutil.TempDir("", "tf-test-*")
+			Expect(err).NotTo(HaveOccurred())
 
 			var handle testutils.CleanupActionHandle
 			handle = testutils.AddCleanupAction(func() {
 				defer testutils.RemoveCleanupAction(handle)
 				Expect(os.RemoveAll(baseDir)).To(Succeed())
 			})
-			Expect(err).NotTo(HaveOccurred())
 
 			paths = terraformer.DefaultPaths().WithBaseDir(baseDir)
 
@@ -96,10 +96,6 @@ var _ = Describe("Terraformer", func() {
 			})
 			It("should not allow to run Plan directly", func() {
 				Expect(tf.Run(terraformer.Plan)).To(MatchError(ContainSubstring("not supported")))
-			})
-			It("should fail if directories can't be ensured", func() {
-				Expect(os.Chmod(baseDir, 0400)).To(Succeed())
-				Expect(tf.Run(terraformer.Apply)).To(MatchError(ContainSubstring("permission denied")))
 			})
 			It("should fail if config can't be fetched", func() {
 				Expect(testClient.Delete(ctx, testObjs.ConfigurationConfigMap)).To(Succeed())

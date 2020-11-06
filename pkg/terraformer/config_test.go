@@ -30,13 +30,13 @@ var _ = Describe("Terraformer Config", func() {
 	BeforeEach(func() {
 		var err error
 		baseDir, err = ioutil.TempDir("", "tf-test-*")
+		Expect(err).NotTo(HaveOccurred())
 
 		var handle testutils.CleanupActionHandle
 		handle = testutils.AddCleanupAction(func() {
 			defer testutils.RemoveCleanupAction(handle)
 			Expect(os.RemoveAll(baseDir)).To(Succeed())
 		})
-		Expect(err).NotTo(HaveOccurred())
 
 		paths = terraformer.DefaultPaths().WithBaseDir(baseDir)
 
@@ -64,10 +64,6 @@ var _ = Describe("Terraformer Config", func() {
 	Describe("#EnsureDirs", func() {
 		It("should create directories successfully", func() {
 			Expect(tf.EnsureTFDirs()).To(Succeed())
-		})
-		It("should fail if base dir can't be written to", func() {
-			Expect(os.Chmod(baseDir, 0400)).To(Succeed())
-			Expect(tf.EnsureTFDirs()).To(MatchError(ContainSubstring("permission denied")))
 		})
 	})
 
@@ -113,16 +109,6 @@ var _ = Describe("Terraformer Config", func() {
 
 				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("not found")))
 			})
-			It("should fail if main.tf file can't be written to", func() {
-				Expect(ioutil.WriteFile(filepath.Join(paths.ConfigDir, testutils.ConfigMainKey), []byte(""), 0444)).To(Succeed())
-
-				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
-			})
-			It("should fail if variables.tf file can't be written to", func() {
-				Expect(ioutil.WriteFile(filepath.Join(paths.ConfigDir, testutils.ConfigVarsKey), []byte(""), 0444)).To(Succeed())
-
-				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
-			})
 		})
 
 		Context("variables fetching", func() {
@@ -136,11 +122,6 @@ var _ = Describe("Terraformer Config", func() {
 				Expect(testClient.Update(ctx, testObjs.VariablesSecret)).To(Succeed())
 
 				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("not found")))
-			})
-			It("should fail if terraform.tfvars file can't be written to", func() {
-				Expect(ioutil.WriteFile(paths.VarsPath, []byte(""), 0444)).To(Succeed())
-
-				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
 			})
 		})
 
@@ -174,24 +155,6 @@ var _ = Describe("Terraformer Config", func() {
 				contents, err := ioutil.ReadFile(paths.StatePath)
 				Expect(err).NotTo(HaveOccurred(), "state file should be present")
 				Expect(contents).To(BeEmpty(), "state file should be empty")
-			})
-			It("should fail if terraform.tfstate file can't be written to", func() {
-				Expect(ioutil.WriteFile(paths.StatePath, []byte(""), 0444)).To(Succeed())
-
-				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
-			})
-			It("should fail if state ConfigMap is not present and terraform.tfstate file can't be written to", func() {
-				Expect(client.IgnoreNotFound(testClient.Delete(ctx, testObjs.StateConfigMap))).To(Succeed())
-				Expect(ioutil.WriteFile(paths.StatePath, []byte(""), 0444)).To(Succeed())
-
-				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
-			})
-			It("should fail if state key is not present and terraform.tfstate file can't be written to", func() {
-				delete(testObjs.StateConfigMap.Data, testutils.StateKey)
-				Expect(testClient.Update(ctx, testObjs.StateConfigMap)).To(Succeed())
-				Expect(ioutil.WriteFile(paths.StatePath, []byte(""), 0444)).To(Succeed())
-
-				Expect(tf.FetchConfigAndState(ctx)).To(MatchError(ContainSubstring("permission denied")))
 			})
 		})
 	})

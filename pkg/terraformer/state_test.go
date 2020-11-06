@@ -53,13 +53,13 @@ var _ = Describe("Terraformer State", func() {
 		fakeClock = &clock.FakeClock{}
 
 		baseDir, err := ioutil.TempDir("", "tf-test-*")
+		Expect(err).NotTo(HaveOccurred())
 
 		var handle testutils.CleanupActionHandle
 		handle = testutils.AddCleanupAction(func() {
 			defer testutils.RemoveCleanupAction(handle)
 			Expect(os.RemoveAll(baseDir)).To(Succeed())
 		})
-		Expect(err).NotTo(HaveOccurred())
 
 		paths = terraformer.DefaultPaths().WithBaseDir(baseDir)
 
