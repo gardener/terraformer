@@ -109,7 +109,6 @@ var _ = Describe("Terraformer", func() {
 			)
 
 			BeforeEach(func() {
-				By("building fake terraform")
 				fakeTerraform = testutils.NewFakeTerraform(
 					testutils.OverwriteExitCode("0"),
 					testutils.OverwriteSleepDuration("50ms"),
@@ -157,7 +156,6 @@ var _ = Describe("Terraformer", func() {
 			})
 
 			JustBeforeEach(func() {
-				By("building fake terraform")
 				fakeTerraform = testutils.NewFakeTerraform(
 					testutils.OverwriteSleepDuration("50ms"),
 					overwriteExitCodes,
@@ -265,7 +263,6 @@ var _ = Describe("Terraformer", func() {
 			)
 
 			BeforeEach(func() {
-				By("building fake terraform")
 				fakeTerraform = testutils.NewFakeTerraform(
 					testutils.OverwriteExitCode("0"),
 					testutils.OverwriteSleepDuration("200ms"),

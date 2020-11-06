@@ -4,7 +4,15 @@
 
 package utils
 
-import "fmt"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+)
 
 const (
 	// TerraformerPackage is the terraformer package path
@@ -78,4 +86,40 @@ func OverwriteSleepDuration(code string) Overwrite {
 		VarPath: "main.sleepDuration",
 		Value:   code,
 	}
+}
+
+// HashBuildArgs returns a hash for an arbitrary set of build args.
+// This allows us to detect, if a test binary really needs to be rebuild or if we can reuse the same binary from the
+// last build. This way we can significantly shorten the runtime of the binary e2e tests, which build terraformer for
+// each test case.
+func HashBuildArgs(args interface{}) (string, error) {
+	data, err := json.Marshal(args)
+	if err != nil {
+		return "", err
+	}
+
+	hash := sha256.Sum256(data)
+	return hex.EncodeToString(hash[:]), nil
+}
+
+// CanReuseLastBuild calculates a hash for the given build args and compares it the the value, hashVar points to.
+// If they are equal, it returns true, indicating, that the last build can be reused for this test run.
+// Otherwise, it returns false and sets hashVar to the calculated hash.
+func CanReuseLastBuild(binaryName string, hashVar *string, args interface{}) bool {
+	if hashVar == nil {
+		Fail("hashVar must not be nil")
+	}
+
+	newHash, err := HashBuildArgs(args)
+	Expect(err).NotTo(HaveOccurred())
+	_, err = fmt.Fprintf(GinkgoWriter, "%s build hash: %s\n", binaryName, newHash)
+	Expect(err).NotTo(HaveOccurred())
+
+	if *hashVar != "" && *hashVar == newHash {
+		_, err := fmt.Fprintf(GinkgoWriter, "reusing last %s build, as hash hasn't changed\n", binaryName)
+		Expect(err).NotTo(HaveOccurred())
+		return true
+	}
+	*hashVar = newHash
+	return false
 }

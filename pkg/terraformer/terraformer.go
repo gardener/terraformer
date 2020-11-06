@@ -38,7 +38,7 @@ var (
 
 // NewDefaultTerraformer creates a new Terraformer with the default PathSet and logger.
 func NewDefaultTerraformer(config *Config) (*Terraformer, error) {
-	return NewTerraformer(config, runtimelog.Log, DefaultPaths(), clock.RealClock{})
+	return NewTerraformer(config, runtimelog.Log, DefaultPaths().WithBaseDir(config.BaseDir), clock.RealClock{})
 }
 
 // NewTerraformer creates a new Terraformer with the given options.

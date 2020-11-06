@@ -24,6 +24,8 @@ type Options struct {
 	kubeconfig string
 	namespace  string
 
+	baseDir string
+
 	completed *terraformer.Config
 }
 
@@ -61,6 +63,7 @@ func (o *Options) Complete() error {
 		VariablesSecretName:        o.variablesSecretName,
 		Namespace:                  namespace,
 		RESTConfig:                 restConfig,
+		BaseDir:                    o.baseDir,
 	}
 
 	return nil
@@ -97,6 +100,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.configurationConfigMapName, "configuration-configmap-name", "", "Name of the ConfigMap that holds the main.tf and variables.tf files")
 	fs.StringVar(&o.stateConfigMapName, "state-configmap-name", "", "Name of the ConfigMap that the terraform.tfstate file should be stored in")
 	fs.StringVar(&o.variablesSecretName, "variables-secret-name", "", "Name of the Secret that holds the terraform.tfvars file")
+	fs.StringVar(&o.baseDir, "base-dir", "", "Base directory to be used for all terraform files (defaults to '/')")
 }
 
 // Completed returns the completed terraformer.Config

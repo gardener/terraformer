@@ -69,6 +69,21 @@ var _ = Describe("Options", func() {
 				Expect(completed.StateConfigMapName).To(Equal(stateConfigMapName))
 				Expect(completed.VariablesSecretName).To(Equal(variablesSecretName))
 			})
+			It("should use empty base dir if omitted", func() {
+				opts.baseDir = ""
+				Expect(opts.Complete()).To(Succeed())
+
+				completed := opts.Completed()
+				Expect(completed.BaseDir).To(Equal(""))
+			})
+			It("should use the given base dir", func() {
+				baseDir := "/tmp/foo/bar"
+				opts.baseDir = baseDir
+				Expect(opts.Complete()).To(Succeed())
+
+				completed := opts.Completed()
+				Expect(completed.BaseDir).To(Equal(baseDir))
+			})
 			It("should fail if --configuration-configmap-name is unset", func() {
 				opts.configurationConfigMapName = ""
 				Expect(opts.Complete()).To(MatchError(ContainSubstring("configuration-configmap-name")))

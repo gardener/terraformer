@@ -70,6 +70,9 @@ type Config struct {
 
 	// RESTConfig holds the completed rest.Config.
 	RESTConfig *rest.Config
+
+	// BaseDir is the base directory to be used for all terraform files (defaults to '/').
+	BaseDir string
 }
 
 // MarshalLogObject implements zapcore.ObjectMarshaler.
