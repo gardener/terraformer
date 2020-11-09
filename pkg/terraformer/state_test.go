@@ -75,7 +75,7 @@ var _ = Describe("Terraformer State", func() {
 				VariablesSecretName:        testObjs.VariablesSecret.Name,
 				RESTConfig:                 restConfig,
 			},
-			zap.New(zap.UseDevMode(true), zap.WriteTo(logBuffer)),
+			zap.New(zap.UseDevMode(true), zap.WriteTo(io.MultiWriter(GinkgoWriter, logBuffer))),
 			paths,
 			fakeClock,
 		)

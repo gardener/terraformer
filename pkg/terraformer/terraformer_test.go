@@ -41,8 +41,8 @@ var _ = Describe("Terraformer", func() {
 			paths         *terraformer.PathSet
 			testObjs      *testutils.TestObjects
 
-			resetVars              func()
-			testStdout, testStderr *gbytes.Buffer
+			resetVars func()
+			logBuffer *gbytes.Buffer
 		)
 
 		BeforeEach(func() {
@@ -60,12 +60,10 @@ var _ = Describe("Terraformer", func() {
 
 			testObjs = testutils.PrepareTestObjects(ctx, testClient)
 
-			testStdout = gbytes.NewBuffer()
-			testStderr = gbytes.NewBuffer()
-
+			logBuffer = gbytes.NewBuffer()
+			multiWriter := io.MultiWriter(GinkgoWriter, logBuffer)
 			resetVars = test.WithVars(
-				&terraformer.Stdout, io.MultiWriter(GinkgoWriter, testStdout),
-				&terraformer.Stderr, io.MultiWriter(GinkgoWriter, testStderr),
+				&terraformer.Stderr, multiWriter,
 			)
 
 			tf, err = terraformer.NewTerraformer(
@@ -76,7 +74,7 @@ var _ = Describe("Terraformer", func() {
 					VariablesSecretName:        testObjs.VariablesSecret.Name,
 					RESTConfig:                 restConfig,
 				},
-				zap.New(zap.UseDevMode(true), zap.WriteTo(io.MultiWriter(GinkgoWriter, testStdout))),
+				zap.New(zap.UseDevMode(true), zap.WriteTo(multiWriter)),
 				paths,
 				clock.RealClock{},
 			)
@@ -125,18 +123,18 @@ var _ = Describe("Terraformer", func() {
 
 			It("should run Apply successfully", func() {
 				Expect(tf.Run(terraformer.Apply)).To(Succeed())
-				Eventually(testStdout).Should(gbytes.Say("some terraform output"))
-				Eventually(testStdout).Should(gbytes.Say("terraform process finished successfully"))
+				Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
+				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 			})
 			It("should run Destroy successfully", func() {
 				Expect(tf.Run(terraformer.Destroy)).To(Succeed())
-				Eventually(testStdout).Should(gbytes.Say("some terraform output"))
-				Eventually(testStdout).Should(gbytes.Say("terraform process finished successfully"))
+				Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
+				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 			})
 			It("should run Validate successfully", func() {
 				Expect(tf.Run(terraformer.Validate)).To(Succeed())
-				Eventually(testStdout).Should(gbytes.Say("some terraform output"))
-				Eventually(testStdout).Should(gbytes.Say("terraform process finished successfully"))
+				Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
+				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 			})
 		})
 
@@ -184,10 +182,10 @@ var _ = Describe("Terraformer", func() {
 					Expect(errors.As(err, &withExitCode)).To(BeTrue())
 					Expect(withExitCode.ExitCode()).To(Equal(12))
 
-					Eventually(testStderr).Should(gbytes.Say("some terraform error"))
-					Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
-					Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
-					Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
+					Eventually(logBuffer).Should(gbytes.Say("some terraform error"))
+					Eventually(logBuffer).Should(gbytes.Say("terraform process finished with error"))
+					Eventually(logBuffer).Should(gbytes.Say("triggering final state update before exiting"))
+					Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 				})
 			})
 
@@ -199,10 +197,10 @@ var _ = Describe("Terraformer", func() {
 				Expect(errors.As(err, &withExitCode)).To(BeTrue())
 				Expect(withExitCode.ExitCode()).To(Equal(42))
 
-				Eventually(testStderr).Should(gbytes.Say("some terraform error"))
-				Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
-				Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
-				Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
+				Eventually(logBuffer).Should(gbytes.Say("some terraform error"))
+				Eventually(logBuffer).Should(gbytes.Say("terraform process finished with error"))
+				Eventually(logBuffer).Should(gbytes.Say("triggering final state update before exiting"))
+				Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 			})
 			It("should return exit code from terraform destroy", func() {
 				err := tf.Run(terraformer.Destroy)
@@ -212,10 +210,10 @@ var _ = Describe("Terraformer", func() {
 				Expect(errors.As(err, &withExitCode)).To(BeTrue())
 				Expect(withExitCode.ExitCode()).To(Equal(43))
 
-				Eventually(testStderr).Should(gbytes.Say("some terraform error"))
-				Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
-				Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
-				Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
+				Eventually(logBuffer).Should(gbytes.Say("some terraform error"))
+				Eventually(logBuffer).Should(gbytes.Say("terraform process finished with error"))
+				Eventually(logBuffer).Should(gbytes.Say("triggering final state update before exiting"))
+				Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 			})
 			It("should return exit code from terraform validate", func() {
 				err := tf.Run(terraformer.Validate)
@@ -225,13 +223,13 @@ var _ = Describe("Terraformer", func() {
 				Expect(errors.As(err, &withExitCode)).To(BeTrue())
 				Expect(withExitCode.ExitCode()).To(Equal(44))
 
-				Eventually(testStderr).Should(gbytes.Say("some terraform error"))
-				Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
-				Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
-				Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
+				Eventually(logBuffer).Should(gbytes.Say("some terraform error"))
+				Eventually(logBuffer).Should(gbytes.Say("terraform process finished with error"))
+				Eventually(logBuffer).Should(gbytes.Say("triggering final state update before exiting"))
+				Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 			})
 
-			Context("validate succeedes, but plan fails", func() {
+			Context("validate succeeds, but plan fails", func() {
 				BeforeEach(func() {
 					overwriteExitCodes = testutils.OverwriteExitCodeForCommands(
 						"init", "0",
@@ -247,10 +245,10 @@ var _ = Describe("Terraformer", func() {
 					Expect(errors.As(err, &withExitCode)).To(BeTrue())
 					Expect(withExitCode.ExitCode()).To(Equal(45))
 
-					Eventually(testStderr).Should(gbytes.Say("some terraform error"))
-					Eventually(testStdout).Should(gbytes.Say("terraform process finished with error"))
-					Eventually(testStdout).Should(gbytes.Say("triggering final state update before exiting"))
-					Eventually(testStdout).Should(gbytes.Say("successfully stored terraform state"))
+					Eventually(logBuffer).Should(gbytes.Say("some terraform error"))
+					Eventually(logBuffer).Should(gbytes.Say("terraform process finished with error"))
+					Eventually(logBuffer).Should(gbytes.Say("triggering final state update before exiting"))
+					Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 				})
 			})
 		})
@@ -296,13 +294,13 @@ var _ = Describe("Terraformer", func() {
 					wg.Done()
 				}()
 
-				Eventually(testStdout).Should(gbytes.Say("some terraform output"), "should run terraform init")
-				Eventually(testStdout).Should(gbytes.Say("some terraform output"), "should run terraform apply")
+				Eventually(logBuffer).Should(gbytes.Say("some terraform output"), "should run terraform init")
+				Eventually(logBuffer).Should(gbytes.Say("some terraform output"), "should run terraform apply")
 
 				signalCh <- syscall.SIGINT
-				Eventually(testStdout).Should(gbytes.Say(fmt.Sprintf("fake terraform received signal: %s", syscall.SIGINT.String())))
+				Eventually(logBuffer).Should(gbytes.Say(fmt.Sprintf("fake terraform received signal: %s", syscall.SIGINT.String())))
 
-				Eventually(testStdout).Should(gbytes.Say("terraform process finished successfully"))
+				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				wg.Done()
 			}, 1)
 
@@ -320,13 +318,13 @@ var _ = Describe("Terraformer", func() {
 					wg.Done()
 				}()
 
-				Eventually(testStdout).Should(gbytes.Say("some terraform output"), "should run terraform init")
-				Eventually(testStdout).Should(gbytes.Say("some terraform output"), "should run terraform apply")
+				Eventually(logBuffer).Should(gbytes.Say("some terraform output"), "should run terraform init")
+				Eventually(logBuffer).Should(gbytes.Say("some terraform output"), "should run terraform apply")
 
 				signalCh <- syscall.SIGTERM
-				Eventually(testStdout).Should(gbytes.Say(fmt.Sprintf("fake terraform received signal: %s", syscall.SIGINT.String())))
+				Eventually(logBuffer).Should(gbytes.Say(fmt.Sprintf("fake terraform received signal: %s", syscall.SIGINT.String())))
 
-				Eventually(testStdout).Should(gbytes.Say("terraform process finished successfully"))
+				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				wg.Done()
 			}, 1)
 		})

@@ -29,7 +29,7 @@ var (
 	// TerraformBinary is the name of the terraform binary, it allows to overwrite it for testing purposes
 	TerraformBinary = "terraform"
 
-	// allow redirecting output in tests to GinkgoWriter
+	// allow redirecting output in tests
 	Stdout, Stderr io.Writer = os.Stdout, os.Stderr
 
 	// SignalNotify allows mocking signal.Notify in tests
@@ -47,6 +47,11 @@ func NewTerraformer(config *Config, log logr.Logger, paths *PathSet, clock clock
 		config: config,
 		log:    log,
 		paths:  paths,
+		clock:  clock,
+
+		StateUpdateQueue: workqueue.NewNamedRateLimitingQueue(workqueue.NewItemExponentialFailureRateLimiter(10*time.Millisecond, 5*time.Minute), "state-update"),
+		// use buffered channel, to make sure we don't miss the signal
+		FinalStateUpdateSucceeded: make(chan struct{}, 1),
 	}
 
 	c, err := client.New(config.RESTConfig, client.Options{})
@@ -54,12 +59,6 @@ func NewTerraformer(config *Config, log logr.Logger, paths *PathSet, clock clock
 		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
 	t.client = c
-
-	t.StateUpdateQueue = workqueue.NewNamedRateLimitingQueue(workqueue.NewItemExponentialFailureRateLimiter(10*time.Millisecond, 5*time.Minute), "state-update")
-	// use buffered channel, to make sure we don't miss the signal
-	t.FinalStateUpdateSucceeded = make(chan struct{}, 1)
-
-	t.clock = clock
 
 	return t, nil
 }
@@ -168,7 +167,8 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command) err
 
 	log.Info("executing terraform", "command", command, "args", strings.Join(args[1:], " "))
 	tfCmd := exec.Command(TerraformBinary, args...)
-	tfCmd.Stdout = Stdout
+	// redirect all terraform output to stderr (same as logs)
+	tfCmd.Stdout = Stderr
 	tfCmd.Stderr = Stderr
 
 	if err := tfCmd.Start(); err != nil {

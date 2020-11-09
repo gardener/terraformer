@@ -28,7 +28,7 @@ func main() {
 
 	exitCode := getExpectedExitCode()
 
-	if sleepDuration != "" {
+	if sleepDuration != "" && (len(os.Args) <= 1 || os.Args[1] != "init") {
 		done := make(chan struct{})
 		defer close(done)
 

@@ -26,7 +26,7 @@ func main() {
 		if log := runtimelog.Log; log.Enabled() {
 			log.Error(err, "error running terraformer")
 		} else {
-			fmt.Println(err)
+			fmt.Printf("error running terraformer: %v", err)
 		}
 
 		// set exit code from terraform
