@@ -20,9 +20,9 @@ RUN export TF_VERSION=$(cat /tmp/terraformer/TF_VERSION) && \
     cd /go/src/github.com/hashicorp/terraform && \
     go install ./tools/terraform-bundle
 
-COPY scripts scripts
+COPY hack hack
 COPY terraform-bundle.hcl .
-RUN ./scripts/fetch-providers
+RUN ./hack/fetch-providers.sh
 
 #############      builder       #############
 FROM golang-base AS builder

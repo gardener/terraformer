@@ -7,7 +7,6 @@
 !cmd/
 !hack/
 !pkg/
-!scripts/
 !vendor/
 !.golangci.yaml
 !go.mod
