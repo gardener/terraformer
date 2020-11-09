@@ -35,6 +35,7 @@ func NewTerraformerCommand() *cobra.Command {
 		Long: `terraformer executes terraform commands inside a Kubernetes cluster and handles Pod lifecycle event (e.g. shutdown signals).
 It reads and stores terraform config and state from/to Kubernetes resources (ConfigMaps and Secrets).
 Also, it continuously updates the state ConfigMap by running a file watcher and updating the ConfigMap as soon as the state file changes.`,
+		Example: exampleForCommand(""),
 		Version: version.Version,
 		Hidden:  true,
 
@@ -84,10 +85,11 @@ Also, it continuously updates the state ConfigMap by running a file watcher and 
 
 func addSubcommand(cmd *cobra.Command, command terraformer.Command, opts *terraformercmd.Options) {
 	cmd.AddCommand(&cobra.Command{
-		Use:   string(command),
-		Short: fmt.Sprintf("execute `terraform %s`", command),
-		Long:  fmt.Sprintf("terraformer %s executes the terraform %s command with the given configuration", command, command),
-		Args:  cobra.NoArgs,
+		Use:     string(command),
+		Short:   fmt.Sprintf("execute `terraform %s`", command),
+		Long:    fmt.Sprintf("terraformer %s executes the terraform %s command with the given configuration", command, command),
+		Args:    cobra.NoArgs,
+		Example: exampleForCommand(string(command)),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := opts.Complete(); err != nil {
@@ -136,3 +138,14 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
+
+func exampleForCommand(command string) string {
+	if command == "" {
+		command = "apply"
+	}
+
+	return "terraformer " + command + ` \
+  --configuration-configmap-name=example.infra.tf-config \
+  --state-configmap-name=example.infra.tf-state \
+  --variables-secret-name=example.infra.tf-vars`
+}
