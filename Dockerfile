@@ -46,7 +46,7 @@ COPY --from=base /tmp/terraformer/terraform /bin/terraform
 COPY --from=base /tmp/terraformer/terraform-provider* /terraform-providers/
 COPY --from=builder /go/bin/terraformer /
 
-ENTRYPOINT /terraformer
+ENTRYPOINT ["/terraformer"]
 
 #############      dev           #############
 FROM golang-base AS dev
