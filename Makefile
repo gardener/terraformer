@@ -7,10 +7,9 @@ IMAGE_REPOSITORY     := eu.gcr.io/gardener-project/gardener/$(NAME)
 IMAGE_REPOSITORY_DEV := $(IMAGE_REPOSITORY)/dev
 REPO_ROOT            := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION              := $(shell cat "$(REPO_ROOT)/VERSION")
-EFFECTIVE_VERSION    := $(VERSION)-$(shell git rev-parse HEAD)
 
-ifneq ($(strip $(shell git status --porcelain 2>/dev/null)),)
-	EFFECTIVE_VERSION := $(EFFECTIVE_VERSION)-dirty
+ifeq ($(EFFECTIVE_VERSION),)
+	EFFECTIVE_VERSION := $(shell $(REPO_ROOT)/hack/get-version.sh)
 endif
 
 IMAGE_TAG            := $(EFFECTIVE_VERSION)
@@ -23,6 +22,7 @@ LD_FLAGS             := "-w -X github.com/gardener/$(NAME)/pkg/version.Version=$
 COMMAND       := apply
 ZAP_DEVEL     := true
 ZAP_LOG_LEVEL := debug
+
 .PHONY: run
 run:
 	# running `go run ./cmd/terraformer $(COMMAND)`
