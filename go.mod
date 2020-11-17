@@ -3,6 +3,7 @@ module github.com/gardener/terraformer
 go 1.15
 
 require (
+	github.com/aws/aws-sdk-go v1.35.26
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gardener/gardener v1.12.4
 	github.com/go-logr/logr v0.1.0
@@ -18,7 +19,7 @@ require (
 	k8s.io/api v0.18.8
 	k8s.io/apimachinery v0.18.8
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	k8s.io/utils v0.0.0-20200619165400-6e3d28b6ed19 // indirect
+	k8s.io/utils v0.0.0-20200619165400-6e3d28b6ed19
 	sigs.k8s.io/controller-runtime v0.6.3
 )
 

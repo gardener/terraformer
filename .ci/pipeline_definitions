@@ -23,6 +23,13 @@ terraformer:
       traits:
         pull-request: ~
     release:
+      steps:
+        test-e2e:
+          execute:
+          - test-e2e.sh
+          depends:
+          - publish
+          image: 'eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-run:stable'
       traits:
         version:
           preprocess: 'finalize'

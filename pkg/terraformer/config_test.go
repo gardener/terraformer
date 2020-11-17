@@ -40,7 +40,7 @@ var _ = Describe("Terraformer Config", func() {
 
 		paths = terraformer.DefaultPaths().WithBaseDir(baseDir)
 
-		testObjs = testutils.PrepareTestObjects(ctx, testClient)
+		testObjs = testutils.PrepareTestObjects(ctx, testClient, "")
 
 		tf, err = terraformer.NewTerraformer(
 			&terraformer.Config{
