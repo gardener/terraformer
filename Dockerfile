@@ -1,5 +1,5 @@
 #############      builder       #############
-FROM golang:1.15.3 AS builder
+FROM eu.gcr.io/gardener-project/3rd/golang:1.15.3 AS builder
 
 WORKDIR /tmp/terraformer
 COPY . .
