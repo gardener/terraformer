@@ -14,7 +14,7 @@ terraformer:
             target: terraformer
     steps:
       verify:
-        image: 'golang:1.15.3'
+        image: 'eu.gcr.io/gardener-project/3rd/golang:1.15.3'
   jobs:
     head-update:
       traits:

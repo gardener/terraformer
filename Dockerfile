@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 #############      golang-base   #############
-FROM golang:1.15.3 AS golang-base
+FROM eu.gcr.io/gardener-project/3rd/golang:1.15.3 AS golang-base
 
 #############      base          #############
 FROM golang-base AS base
