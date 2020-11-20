@@ -61,11 +61,22 @@ var _ = Describe("Pod E2E test", func() {
 	})
 
 	It("should apply and destroy config successfully", func() {
-		var (
-			keyPairName   string
-			cleanupHandle testutils.CleanupActionHandle
-		)
-		cleanupHandle = testutils.AddCleanupAction(func() {
+		var keyPairName string
+
+		testutils.AddCleanupAction(func() {
+			// ensure, that we don't leak any resources even if terraformer destroy fails,
+			// so we don't have to cleanup manually
+			By("ensuring cleanup of AWS resources")
+			_, err := ec2Client.DeleteKeyPairWithContext(ctx, &ec2.DeleteKeyPairInput{
+				KeyName: awssdk.String(testObjs.Namespace + "-ssh-publickey"),
+			})
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "InvalidKeyPair.NotFound" {
+				return
+			}
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		defer func() {
 			By("deploying terraformer destroy pod")
 			pod, err := deployTerraformerPod(ctx, "destroy")
 			Expect(err).NotTo(HaveOccurred())
@@ -76,9 +87,7 @@ var _ = Describe("Pod E2E test", func() {
 
 			By("verifying deletion in state ConfigMap")
 			verifyStateConfigMapDeletion()
-
-			testutils.RemoveCleanupAction(cleanupHandle)
-		})
+		}()
 
 		By("deploying cloudprovider secret into namespace")
 		Expect(deployCloudProviderSecret(ctx)).To(Succeed())
