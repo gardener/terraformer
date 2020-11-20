@@ -63,7 +63,7 @@ var _ = Describe("Terraformer State", func() {
 
 		paths = terraformer.DefaultPaths().WithBaseDir(baseDir)
 
-		testObjs = testutils.PrepareTestObjects(ctx, testClient)
+		testObjs = testutils.PrepareTestObjects(ctx, testClient, "")
 
 		logBuffer = gbytes.NewBuffer()
 

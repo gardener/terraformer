@@ -58,7 +58,7 @@ var _ = Describe("Terraformer", func() {
 
 			paths = terraformer.DefaultPaths().WithBaseDir(baseDir)
 
-			testObjs = testutils.PrepareTestObjects(ctx, testClient)
+			testObjs = testutils.PrepareTestObjects(ctx, testClient, "")
 
 			logBuffer = gbytes.NewBuffer()
 			multiWriter := io.MultiWriter(GinkgoWriter, logBuffer)

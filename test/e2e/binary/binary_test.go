@@ -95,7 +95,7 @@ var _ = Describe("terraformer", func() {
 				testutils.LDFlags(testutils.OverwriteTerraformBinary(testutils.FakeTerraformBinary))...,
 			)
 
-			testObjs = testutils.PrepareTestObjects(ctx, testClient)
+			testObjs = testutils.PrepareTestObjects(ctx, testClient, "")
 			args = []string{"--zap-devel=true", "--base-dir=" + baseDir}
 		})
 

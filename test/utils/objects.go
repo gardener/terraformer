@@ -25,11 +25,15 @@ type TestObjects struct {
 }
 
 // PrepareTestObjects creates a default set of needed API objects for tests
-func PrepareTestObjects(ctx context.Context, c client.Client) *TestObjects {
+func PrepareTestObjects(ctx context.Context, c client.Client, namespacePrefix string) *TestObjects {
 	o := &TestObjects{ctx: ctx, client: c}
 
+	if namespacePrefix == "" {
+		namespacePrefix = "tf-test-"
+	}
+
 	// create test namespace
-	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: "tf-test-"}}
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{GenerateName: namespacePrefix}}
 	Expect(o.client.Create(ctx, ns)).To(Succeed())
 	Expect(ns.Name).NotTo(BeEmpty())
 	o.Namespace = ns.Name
@@ -83,11 +87,12 @@ func PrepareTestObjects(ctx context.Context, c client.Client) *TestObjects {
 
 // Refresh retrieves a fresh copy of the objects from the API server, so that tests can make assertions on them.
 func (o *TestObjects) Refresh() {
-	Expect(o.client.Get(o.ctx, objectKeyFromObject(o.ConfigurationConfigMap), o.ConfigurationConfigMap)).To(Succeed())
-	Expect(o.client.Get(o.ctx, objectKeyFromObject(o.StateConfigMap), o.StateConfigMap)).To(Succeed())
-	Expect(o.client.Get(o.ctx, objectKeyFromObject(o.VariablesSecret), o.VariablesSecret)).To(Succeed())
+	Expect(o.client.Get(o.ctx, ObjectKeyFromObject(o.ConfigurationConfigMap), o.ConfigurationConfigMap)).To(Succeed())
+	Expect(o.client.Get(o.ctx, ObjectKeyFromObject(o.StateConfigMap), o.StateConfigMap)).To(Succeed())
+	Expect(o.client.Get(o.ctx, ObjectKeyFromObject(o.VariablesSecret), o.VariablesSecret)).To(Succeed())
 }
 
-func objectKeyFromObject(obj metav1.Object) client.ObjectKey {
+// ObjectKeyFromObject returns an ObjectKey for the given object.
+func ObjectKeyFromObject(obj metav1.Object) client.ObjectKey {
 	return client.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()}
 }

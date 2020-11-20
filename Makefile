@@ -7,13 +7,13 @@ IMAGE_REPOSITORY     := eu.gcr.io/gardener-project/gardener/$(NAME)
 IMAGE_REPOSITORY_DEV := $(IMAGE_REPOSITORY)/dev
 REPO_ROOT            := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION              := $(shell cat "$(REPO_ROOT)/VERSION")
-
-ifeq ($(EFFECTIVE_VERSION),)
-	EFFECTIVE_VERSION := $(shell $(REPO_ROOT)/hack/get-version.sh)
-endif
-
+EFFECTIVE_VERSION    := $(shell $(REPO_ROOT)/hack/get-version.sh)
 IMAGE_TAG            := $(EFFECTIVE_VERSION)
-LD_FLAGS             := "-w -X github.com/gardener/$(NAME)/pkg/version.Version=$(EFFECTIVE_VERSION)"
+LD_FLAGS             := "-w -X github.com/gardener/$(NAME)/pkg/version.Version=$(IMAGE_TAG)"
+
+REGION                 := eu-west-1
+ACCESS_KEY_ID_FILE     := .kube-secrets/aws/access_key_id.secret
+SECRET_ACCESS_KEY_FILE := .kube-secrets/aws/secret_access_key.secret
 
 #########################################
 # Rules for local development scenarios #
@@ -142,6 +142,19 @@ format:
 .PHONY: test
 test:
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/test.sh ./cmd/... ./pkg/... ./test/e2e/binary/...
+
+.PHONY: test-e2e
+test-e2e:
+	# Executing pod e2e test with terraformer image $(IMAGE_REPOSITORY):$(IMAGE_TAG)
+	# If the image for this tag is not built/pushed yet, you have to do so first.
+	# Or you can use a specific image tag by setting the IMAGE_TAG variable
+	# like this: `make test-e2e IMAGE_TAG=v2.0.0`
+	@go test -timeout=0 -mod=vendor -ldflags $(LD_FLAGS) ./test/e2e/pod \
+       --v -ginkgo.v -ginkgo.progress \
+       --kubeconfig="${KUBECONFIG}" \
+       --access-key-id="$(shell cat $(ACCESS_KEY_ID_FILE))" \
+       --secret-access-key="$(shell cat $(SECRET_ACCESS_KEY_FILE))" \
+       --region="$(REGION)"
 
 .PHONY: test-cov
 test-cov:
