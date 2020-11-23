@@ -1,0 +1,38 @@
+apiVersion: testmachinery.sapcloud.io/v1beta1
+kind: Testrun
+metadata:
+  generateName: tm-terraformer-
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 172800 # 2 days
+  {{- if .Values.revision }}
+  locationSets:
+    - default: true
+      locations:
+        - type: git
+          repo: https://github.com/gardener/terraformer.git
+          revision: {{ .Values.revision }}
+  {{- end }}
+
+  config:
+    - name: ACCESS_KEY_ID
+      type: env
+      valueFrom:
+        secretKeyRef:
+          name: shoot-operator-aws
+          key: accessKeyID
+    - name: SECRET_ACCESS_KEY
+      type: env
+      valueFrom:
+        secretKeyRef:
+          name: shoot-operator-aws
+          key: secretAccessKey
+
+  testflow:
+    - name: pod-e2e-test
+      definition:
+        name: pod-e2e-test
+        config:
+          - name: REGION
+            type: env
+            value: eu-west-1
