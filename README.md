@@ -126,3 +126,27 @@ It is used to install all Terraform provider plugins specified in [`terraform-bu
 
 Currently, the terraformer docker image contains all provider plugins, but we might split it up into multiple docker
 images with only one provider plugin in the future (see https://github.com/gardener/terraformer/issues/46).
+
+## Find out more & Get in touch!
+
+Terraformer was presented in the Gardener Community Call on Nov, 13th 2020.  
+Watch the [recording](https://youtu.be/4sQs_Hj6xpY) to learn the story behind terraformer v2 and how it is used
+in our provider extensions!
+
+Feedback and contributions are always welcome!
+
+Reach out to us:
+- via our [Slack channel](https://kubernetes.slack.com/messages/gardener), get an invite [here](http://slack.k8s.io/)
+- on our [Mailing List](https://groups.google.com/forum/?fromgroups#!forum/gardener)
+- on Twitter [@GardenerProject](https://twitter.com/GardenerProject)
+- in our bi-weekly [Community Call](https://github.com/gardener/documentation/blob/master/CONTRIBUTING.md#weekly-meeting)
+
+Please find further resources about our project here:
+
+- [Our landing page gardener.cloud](https://gardener.cloud/)
+- ["Gardener Project Update" blog on kubernetes.io](https://kubernetes.io/blog/2019/12/02/gardener-project-update/).
+- ["Gardener, the Kubernetes Botanist" blog on kubernetes.io](https://kubernetes.io/blog/2018/05/17/gardener/)
+- [SAP news article about "Project Gardener"](https://news.sap.com/2018/11/hasso-plattner-founders-award-finalist-profile-project-gardener/)
+- [Introduction movie: "Gardener - Planting the Seeds of Success in the Cloud"](https://www.sap-tv.com/video/40962/gardener-planting-the-seeds-of-success-in-the-cloud)
+- ["Thinking Cloud Native" talk at EclipseCon 2018](https://www.youtube.com/watch?v=bfw22WPg99A)
+- [Blog - "Showcase of Gardener at OSCON 2018"](https://blogs.sap.com/2018/07/26/showcase-of-gardener-at-oscon/)
