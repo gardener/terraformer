@@ -74,8 +74,11 @@ This will open a shell in this container, where you can execute all commands for
 
 ## How to test it
 
-Terraformer currently comes with two sets of tests: a bunch of unit tests and a binary e2e test suite.
-Both of these can be executed by running `make test`.
+Terraformer currently comes with three suites of tests: a unit test, a binary e2e and a Pod e2e test suite.
+
+### Unit Tests and Binary E2E tests
+
+The unit tests and binary e2e tests can be executed by running `make test`.
 Most tests are executed against a local control plane by leveraging the [envtest package](https://github.com/kubernetes-sigs/controller-runtime/tree/master/pkg/envtest).
 Therefore, the `kube-apiserver` and `etcd` binaries are fetched to `bin/kubebuilder` and will be started by the tests.
 
@@ -84,6 +87,32 @@ You can also run the tests against a different cluster for debugging or other pu
 
 ```
 KUBECONFIG=$HOME/.kube/configs/local/garden.yaml USE_EXISTING_CLUSTER=true make test
+```
+
+### Pod E2E tests
+
+The Pod E2E tests can be executed via `make test-e2e`.
+This will run e2e tests against a terraformer Pod. It uses an existing cluster (given by the `KUBECONFIG`
+env var) and deploys a terraformer `apply` Pod, that will create some lightweight resource (ec2 keypair) on AWS.
+The test validates, that the resource was created on AWS using the AWS go-sdk and that the state ConfigMap has
+been updated accordingly. After that, the test deploys a terraformer `destroy` Pod and validates again the changes
+on AWS and the state ConfigMap.
+
+In order to execute this test suite, you will need an existing Kubernetes cluster, where the terraformer Pod will be
+deployed (pointed to by the `KUBECONFIG` env var). This can be any Cluster (either local, e.g. via kind) or a remote
+one running in the Cloud. Additionally, you will need a set of AWS credentials with which the test resources will be
+created (stored under `.kube-secrets/aws/{access_key_id,secret_access_key}.secret`).
+
+```
+$ make test-e2e
+# Executing pod e2e test with terraformer image eu.gcr.io/gardener-project/gardener/terraformer:v2.1.0-dev-b705a1b4b9bfd47a106998892f48ced0dc8caa56
+# If the image for this tag is not built/pushed yet, you have to do so first.
+# Or you can use a specific image tag by setting the IMAGE_TAG variable
+# like this: `make test-e2e IMAGE_TAG=v2.0.0`
+=== RUN   TestTerraformer
+Running Suite: Terraformer Pod E2E Suite
+========================================
+...
 ```
 
 ## Docker Images
@@ -97,3 +126,27 @@ It is used to install all Terraform provider plugins specified in [`terraform-bu
 
 Currently, the terraformer docker image contains all provider plugins, but we might split it up into multiple docker
 images with only one provider plugin in the future (see https://github.com/gardener/terraformer/issues/46).
+
+## Find out more & Get in touch!
+
+Terraformer was presented in the Gardener Community Call on Nov, 13th 2020.  
+Watch the [recording](https://youtu.be/4sQs_Hj6xpY) to learn the story behind terraformer v2 and how it is used
+in our provider extensions!
+
+Feedback and contributions are always welcome!
+
+Reach out to us:
+- via our [Slack channel](https://kubernetes.slack.com/messages/gardener), get an invite [here](http://slack.k8s.io/)
+- on our [Mailing List](https://groups.google.com/forum/?fromgroups#!forum/gardener)
+- on Twitter [@GardenerProject](https://twitter.com/GardenerProject)
+- in our bi-weekly [Community Call](https://github.com/gardener/documentation/blob/master/CONTRIBUTING.md#weekly-meeting)
+
+Please find further resources about our project here:
+
+- [Our landing page gardener.cloud](https://gardener.cloud/)
+- ["Gardener Project Update" blog on kubernetes.io](https://kubernetes.io/blog/2019/12/02/gardener-project-update/).
+- ["Gardener, the Kubernetes Botanist" blog on kubernetes.io](https://kubernetes.io/blog/2018/05/17/gardener/)
+- [SAP news article about "Project Gardener"](https://news.sap.com/2018/11/hasso-plattner-founders-award-finalist-profile-project-gardener/)
+- [Introduction movie: "Gardener - Planting the Seeds of Success in the Cloud"](https://www.sap-tv.com/video/40962/gardener-planting-the-seeds-of-success-in-the-cloud)
+- ["Thinking Cloud Native" talk at EclipseCon 2018](https://www.youtube.com/watch?v=bfw22WPg99A)
+- [Blog - "Showcase of Gardener at OSCON 2018"](https://blogs.sap.com/2018/07/26/showcase-of-gardener-at-oscon/)
