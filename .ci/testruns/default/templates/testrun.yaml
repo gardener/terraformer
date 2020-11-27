@@ -7,11 +7,12 @@ spec:
   ttlSecondsAfterFinished: 172800 # 2 days
   {{- if .Values.revision }}
   locationSets:
-    - default: true
-      locations:
-        - type: git
-          repo: https://github.com/gardener/terraformer.git
-          revision: {{ .Values.revision }}
+  - default: true
+    name: terraformer
+    locations:
+    - type: git
+      repo: https://github.com/gardener/terraformer.git
+      revision: {{ .Values.revision }}
   {{- end }}
 
   config:
