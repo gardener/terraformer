@@ -8,7 +8,12 @@ IMAGE_REPOSITORY_DEV := $(IMAGE_REPOSITORY)/dev
 REPO_ROOT            := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION              := $(shell cat "$(REPO_ROOT)/VERSION")
 EFFECTIVE_VERSION    := $(shell $(REPO_ROOT)/hack/get-version.sh)
-IMAGE_TAG            := $(EFFECTIVE_VERSION)
+
+# default IMAGE_TAG if unset (overwritten in release test)
+ifeq ($(IMAGE_TAG),)
+	override IMAGE_TAG = $(EFFECTIVE_VERSION)
+endif
+
 LD_FLAGS             := "-w -X github.com/gardener/$(NAME)/pkg/version.Version=$(IMAGE_TAG)"
 
 REGION                 := eu-west-1
