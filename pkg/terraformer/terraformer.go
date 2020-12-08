@@ -17,20 +17,33 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-multierror"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	runtimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gardener/terraformer/pkg/utils"
+)
+
+const (
+	// maxPatchRetries define the maximum number of attempts to patch a resource in case of conflict
+	maxPatchRetries = 2
 )
 
 var (
 	// TerraformBinary is the name of the terraform binary, it allows to overwrite it for testing purposes
 	TerraformBinary = "terraform"
 
-	// allow redirecting output in tests
-	Stdout, Stderr io.Writer = os.Stdout, os.Stderr
+	// Stdout alias to os.Stdout allowing output redirection in tests
+	Stdout io.Writer = os.Stdout
+
+	// Stderr alias to os.Stderr allowing output redirection in tests
+	Stderr io.Writer = os.Stderr
 
 	// SignalNotify allows mocking signal.Notify in tests
 	SignalNotify = signal.Notify
@@ -128,6 +141,10 @@ func (t *Terraformer) execute(command Command) (rErr error) {
 	// stop file watcher and wait for it to be finished
 	defer shutdownFileWatcher()
 
+	if err := t.addFinalizer(ctx); err != nil {
+		return fmt.Errorf("error adding finalizers: %w", err)
+	}
+
 	// initialize terraform plugins
 	if err := t.executeTerraform(ctx, Init); err != nil {
 		return fmt.Errorf("error executing terraform %s: %w", Init, err)
@@ -141,6 +158,13 @@ func (t *Terraformer) execute(command Command) (rErr error) {
 	if command == Validate {
 		if err := t.executeTerraform(ctx, Plan); err != nil {
 			return fmt.Errorf("error executing terraform %s: %w", Plan, err)
+		}
+	}
+
+	// after a successful execution of destroy command, remove the finalizers from the resources
+	if command == Destroy {
+		if err := t.removeFinalizer(ctx); err != nil {
+			return fmt.Errorf("error removing finalizers: %w", err)
 		}
 	}
 
@@ -203,5 +227,95 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command) err
 	}
 
 	log.Info("terraform process finished successfully", "command", command)
+	return nil
+}
+
+func (t *Terraformer) addFinalizer(ctx context.Context) error {
+	logger := t.stepLogger("add-finalizer")
+	return t.updateObjects(ctx, logger, controllerutil.AddFinalizer)
+
+}
+
+func (t *Terraformer) removeFinalizer(ctx context.Context) error {
+	logger := t.stepLogger("remove-finalizer")
+	return t.updateObjects(ctx, logger, controllerutil.RemoveFinalizer)
+}
+
+func (t *Terraformer) terraformObjects() []controllerutil.Object {
+	return []controllerutil.Object{
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: t.config.Namespace,
+				Name:      t.config.VariablesSecretName,
+			},
+		},
+		&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: t.config.Namespace,
+				Name:      t.config.ConfigurationConfigMapName,
+			},
+		},
+		&corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: t.config.Namespace,
+				Name:      t.config.StateConfigMapName,
+			},
+		},
+	}
+}
+
+func (t *Terraformer) updateObjects(ctx context.Context, log logr.Logger, patchObj func(controllerutil.Object, string)) error {
+	allErrors := &multierror.Error{
+		ErrorFormat: utils.NewErrorFormatFuncWithPrefix("failed to update object finalizer"),
+	}
+
+	log.Info("updating finalizers for terraform resources")
+	for _, obj := range t.terraformObjects() {
+		if err := t.updateObjectFinalizers(ctx, log, obj, patchObj); err != nil {
+			allErrors = multierror.Append(allErrors, err)
+		}
+	}
+
+	err := allErrors.ErrorOrNil()
+	if err != nil {
+		log.Error(err, "failed to updated finalizers for all terraform resources")
+	} else {
+		log.Info("successfully updated finalizers for terraform resources")
+	}
+	return err
+}
+
+func (t *Terraformer) updateObjectFinalizers(ctx context.Context, log logr.Logger, obj controllerutil.Object, patchObj func(controllerutil.Object, string)) error {
+	key, err := client.ObjectKeyFromObject(obj)
+	if err != nil {
+		log.Error(err, "failed to construct key", "object", obj)
+		return err
+	}
+
+	for i := 0; i < maxPatchRetries; i++ {
+		err = t.client.Get(ctx, key, obj)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				log.V(1).Info("create empty object", "key", key)
+				patchObj(obj, TerraformerFinalizer)
+				return t.client.Create(ctx, obj)
+			}
+			log.Error(err, "failed to get object", "key", key)
+			return err
+		}
+
+		old := obj.DeepCopyObject()
+		patchObj(obj, TerraformerFinalizer)
+		err = t.client.Patch(ctx, obj, client.MergeFromWithOptions(old, client.MergeFromWithOptimisticLock{}))
+		if !apierrors.IsConflict(err) {
+			break
+		}
+	}
+
+	if client.IgnoreNotFound(err) != nil {
+		log.Error(err, "failed to update object in the store", "key", key)
+		return err
+	}
+
 	return nil
 }

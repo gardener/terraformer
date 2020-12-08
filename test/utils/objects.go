@@ -11,6 +11,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/gardener/terraformer/pkg/terraformer"
 )
 
 // TestObjects models a set of API objects used in tests
@@ -40,6 +43,7 @@ func PrepareTestObjects(ctx context.Context, c client.Client, namespacePrefix st
 
 	var handle CleanupActionHandle
 	handle = AddCleanupAction(func() {
+		o.CleanupTestObjects(ctx)
 		Expect(client.IgnoreNotFound(o.client.Delete(ctx, ns))).To(Succeed())
 		RemoveCleanupAction(handle)
 	})
@@ -83,6 +87,36 @@ func PrepareTestObjects(ctx context.Context, c client.Client, namespacePrefix st
 	Expect(err).NotTo(HaveOccurred())
 
 	return o
+}
+
+// CleanupTestObjects take care to remove the finalizers of the secret and configmaps
+func (o *TestObjects) CleanupTestObjects(ctx context.Context) {
+	configurationConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: o.ConfigurationConfigMap.Name, Namespace: o.Namespace},
+	}
+	Expect(client.IgnoreNotFound(o.client.Get(ctx, ObjectKeyFromObject(configurationConfigMap), configurationConfigMap))).To(Succeed())
+	copyConfigurationConfigMap := configurationConfigMap.DeepCopy()
+	controllerutil.RemoveFinalizer(copyConfigurationConfigMap, terraformer.TerraformerFinalizer)
+	Expect(client.IgnoreNotFound(o.client.Patch(ctx, copyConfigurationConfigMap, client.MergeFrom(configurationConfigMap)))).To(Succeed())
+	Expect(client.IgnoreNotFound(o.client.Delete(ctx, copyConfigurationConfigMap))).To(Succeed())
+
+	stateConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: o.StateConfigMap.Name, Namespace: o.Namespace},
+	}
+	Expect(client.IgnoreNotFound(o.client.Get(ctx, ObjectKeyFromObject(stateConfigMap), stateConfigMap))).To(Succeed())
+	copyStateConfigMap := stateConfigMap.DeepCopy()
+	controllerutil.RemoveFinalizer(copyStateConfigMap, terraformer.TerraformerFinalizer)
+	Expect(client.IgnoreNotFound(o.client.Patch(ctx, copyStateConfigMap, client.MergeFrom(stateConfigMap)))).To(Succeed())
+	Expect(client.IgnoreNotFound(o.client.Delete(ctx, copyStateConfigMap))).To(Succeed())
+
+	variablesSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: o.VariablesSecret.Name, Namespace: o.Namespace},
+	}
+	Expect(client.IgnoreNotFound(o.client.Get(ctx, ObjectKeyFromObject(variablesSecret), variablesSecret))).To(Succeed())
+	copyVariablesSecret := variablesSecret.DeepCopy()
+	controllerutil.RemoveFinalizer(copyVariablesSecret, terraformer.TerraformerFinalizer)
+	Expect(client.IgnoreNotFound(o.client.Patch(ctx, copyVariablesSecret, client.MergeFrom(variablesSecret)))).To(Succeed())
+	Expect(client.IgnoreNotFound(o.client.Delete(ctx, copyVariablesSecret))).To(Succeed())
 }
 
 // Refresh retrieves a fresh copy of the objects from the API server, so that tests can make assertions on them.
