@@ -26,7 +26,7 @@ if [[ "$VERSION" = *-dev ]] ; then
   VERSION="$VERSION-$(git rev-parse HEAD)"
 fi
 
-# .dockerignore ignores all files unrelevant for build (e.g. docs) to only copy relevant source files to the build
+# .dockerignore ignores all files unrelevant for build (e.g. example/*) to only copy relevant source files to the build
 # container. Hence, git will always detect a dirty work tree when building in a container (many deleted files).
 # This command filters out all deleted files that are ignored by .dockerignore to only detect changes to relevant files
 # as a dirty work tree.

@@ -39,7 +39,7 @@ const (
 	keyAccessKeyID          = "accessKeyID"
 	keySecretAccessKey      = "secretAccessKey"
 
-	terraformerImage = "eu.gcr.io/gardener-project/gardener/terraformer"
+	terraformerImage = "eu.gcr.io/gardener-project/gardener/terraformer-aws"
 )
 
 var (
@@ -51,7 +51,7 @@ var (
 
 var _ = Describe("Pod E2E test", func() {
 	BeforeEach(func() {
-		terraformerImageTag = version.Version
+		terraformerImageTag = version.Get().GitVersion
 
 		By("creating test objects")
 		testObjs = testutils.PrepareTestObjects(ctx, testClient, prefix)

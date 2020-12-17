@@ -5,8 +5,30 @@
 package version
 
 var (
-	// Version contains the overall codebase version. It's for detecting
-	// what code a binary was built from.
-	// It is injecting via -ldflags during build time.
-	Version = "v0.0.0-dev"
+	version Info
+
+	// build time information injected via -ldflags
+
+	gitVersion = "v0.0.0-dev"
+	provider   = ""
 )
+
+// Info is a struct containing build time information.
+type Info struct {
+	// GitVersion is the overall codebase version the binary was built from.
+	GitVersion string
+	// Provider is the container image variant, stating which terraform provider plugins were packaged into the image.
+	Provider string
+}
+
+func init() {
+	version = Info{
+		GitVersion: gitVersion,
+		Provider:   provider,
+	}
+}
+
+// Get returns the injected build time information.
+func Get() Info {
+	return version
+}

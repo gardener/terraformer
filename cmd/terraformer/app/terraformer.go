@@ -18,12 +18,13 @@ import (
 
 	terraformercmd "github.com/gardener/terraformer/pkg/cmd"
 	"github.com/gardener/terraformer/pkg/terraformer"
-	"github.com/gardener/terraformer/pkg/version"
+	versionpkg "github.com/gardener/terraformer/pkg/version"
 )
 
 // NewTerraformerCommand creates a new terraformer cobra command
 func NewTerraformerCommand() *cobra.Command {
 	var (
+		version = versionpkg.Get()
 		zapOpts = &logzap.Options{}
 		tfOpts  = terraformercmd.NewOptions()
 	)
@@ -36,7 +37,7 @@ func NewTerraformerCommand() *cobra.Command {
 It reads and stores terraform config and state from/to Kubernetes resources (ConfigMaps and Secrets).
 Also, it continuously updates the state ConfigMap by running a file watcher and updating the ConfigMap as soon as the state file changes.`,
 		Example: exampleForCommand(""),
-		Version: version.Version,
+		Version: fmt.Sprintf("%#v", version),
 		Hidden:  true,
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -57,7 +58,7 @@ Also, it continuously updates the state ConfigMap by running a file watcher and 
 				},
 			))
 
-			runtimelog.Log.Info("Starting terraformer...", "version", version.Version)
+			runtimelog.Log.Info("Starting terraformer...", "version", version.GitVersion, "provider", version.Provider)
 			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 				runtimelog.Log.Info(fmt.Sprintf("FLAG: --%s=%s", flag.Name, flag.Value))
 			})
