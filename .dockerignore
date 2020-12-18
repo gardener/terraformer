@@ -4,6 +4,7 @@
 # Exclude folders relevant for build
 !.git
 !.dockerignore
+!build/
 !cmd/
 !hack/
 !pkg/
@@ -14,4 +15,3 @@
 !Makefile
 !VERSION
 !TF_VERSION
-!terraform-bundle.hcl

@@ -12,6 +12,42 @@ terraformer:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer'
             target: terraformer
+          terraformer-alicloud:
+            registry: 'gcr-readwrite'
+            image: 'eu.gcr.io/gardener-project/gardener/terraformer-alicloud'
+            target: terraformer
+            build_args:
+              PROVIDER: alicloud
+          terraformer-aws:
+            registry: 'gcr-readwrite'
+            image: 'eu.gcr.io/gardener-project/gardener/terraformer-aws'
+            target: terraformer
+            build_args:
+              PROVIDER: aws
+          terraformer-azure:
+            registry: 'gcr-readwrite'
+            image: 'eu.gcr.io/gardener-project/gardener/terraformer-azure'
+            target: terraformer
+            build_args:
+              PROVIDER: azure
+          terraformer-gcp:
+            registry: 'gcr-readwrite'
+            image: 'eu.gcr.io/gardener-project/gardener/terraformer-gcp'
+            target: terraformer
+            build_args:
+              PROVIDER: gcp
+          terraformer-openstack:
+            registry: 'gcr-readwrite'
+            image: 'eu.gcr.io/gardener-project/gardener/terraformer-openstack'
+            target: terraformer
+            build_args:
+              PROVIDER: openstack
+          terraformer-packet:
+            registry: 'gcr-readwrite'
+            image: 'eu.gcr.io/gardener-project/gardener/terraformer-packet'
+            target: terraformer
+            build_args:
+              PROVIDER: packet
     steps:
       verify:
         image: 'eu.gcr.io/gardener-project/3rd/golang:1.15.3'

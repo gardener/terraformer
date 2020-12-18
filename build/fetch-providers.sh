@@ -8,7 +8,7 @@ terraform-bundle \
   package \
   -os=linux \
   -arch=amd64 \
-  <(cat $(dirname $0)/../terraform-bundle.hcl | sed "s/TF_VERSION/$(cat "$(dirname $0)/../TF_VERSION")/g")
+  <(cat ./terraform-bundle.hcl | sed "s/TF_VERSION/$(cat ./TF_VERSION)/g")
 
 BUNDLE="$(ls -t terraform*.zip | head -1)"
 unzip -n $BUNDLE

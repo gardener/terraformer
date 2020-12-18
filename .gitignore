@@ -5,6 +5,7 @@
 /dev
 .terraform
 
+*.test
 *.coverprofile
 *.html
 .vscode
