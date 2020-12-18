@@ -135,7 +135,7 @@ Historically, terraformer images included provider plugins for all Gardener prov
 terraformer for managing a Shoot cluster's infrastructure. This image is equivalent to the `all` variant.
 Packaging all provider plugins makes terraformer's images quite large and thus unnecessarily increases image pull time,
 network traffic and cost.
-With the different image variants, Gardener provider extensions can now employ terraformer images with only the needed
+With the different image variants, Gardener provider extensions can now deploy terraformer images with only the needed
 plugins inside. Also, the different extensions don't have to agree on a common terraform version, but are able to choose
 the terraform version which they want to use in their provider-specific image.
 
