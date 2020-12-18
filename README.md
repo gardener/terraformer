@@ -128,8 +128,8 @@ This repo features different container image variants, `all` and a few different
 Each image variant includes the terraformer binary itself, plus terraform and some terraform provider plugins.
 
 The image variants are specified under `build`, each directory represents one variant.
-Each variant defines, which version of terraform (`TF_VERSION` file), which terraform provider plugins
-and their respective versions (`terraform-bundle.hcl` file) should be packaged into the image as well.
+Each variant defines which version of terraform (`TF_VERSION` file) and which terraform provider plugins
+(with their respective versions, see (`terraform-bundle.hcl` file)) should be packaged into the image as well.
 
 Historically, terraformer images included provider plugins for all Gardener provider extensions that were using
 terraformer for managing a Shoot cluster's infrastructure. This image is equivalent to the `all` variant.
