@@ -50,7 +50,7 @@ terraformer:
               PROVIDER: packet
     steps:
       verify:
-        image: 'eu.gcr.io/gardener-project/3rd/golang:1.15.3'
+        image: 'eu.gcr.io/gardener-project/3rd/golang:1.15.5'
   jobs:
     head-update:
       traits:

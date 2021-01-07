@@ -43,7 +43,7 @@ ARG PROVIDER=all
 RUN make install PROVIDER=$PROVIDER
 
 ############# terraformer
-FROM eu.gcr.io/gardener-project/3rd/alpine:3.12.1 AS terraformer
+FROM eu.gcr.io/gardener-project/3rd/alpine:3.12.3 AS terraformer
 
 RUN apk add --update curl tzdata
 
