@@ -7,7 +7,7 @@ terraform {
 }
 
 providers {
-  openstack   = ["1.28.0"]
+  openstack   = ["1.36.0"]
   template    = ["2.1.2"]
   null        = ["2.1.2"]
 }
