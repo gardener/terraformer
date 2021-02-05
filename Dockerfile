@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ############# golang-base
-FROM eu.gcr.io/gardener-project/3rd/golang:1.15.5 AS golang-base
+FROM eu.gcr.io/gardener-project/3rd/golang:1.15.7 AS golang-base
 
 ############# terraform-base
 FROM golang-base AS terraform-base
@@ -45,7 +45,8 @@ RUN make install PROVIDER=$PROVIDER
 ############# terraformer
 FROM eu.gcr.io/gardener-project/3rd/alpine:3.12.3 AS terraformer
 
-RUN apk add --update curl tzdata
+# add additional packages that are required by provider plugins
+RUN apk add --update tzdata
 
 WORKDIR /
 
