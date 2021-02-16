@@ -121,6 +121,17 @@ func (o *TestObjects) CleanupTestObjects(ctx context.Context) {
 
 // Refresh retrieves a fresh copy of the objects from the API server, so that tests can make assertions on them.
 func (o *TestObjects) Refresh() {
+	// reset all objects, json encoder doesn't reset removed fields on in-memory objects (e.g. finalizers)
+	o.ConfigurationConfigMap = &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: o.ConfigurationConfigMap.Name, Namespace: o.Namespace},
+	}
+	o.StateConfigMap = &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: o.StateConfigMap.Name, Namespace: o.Namespace},
+	}
+	o.VariablesSecret = &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: o.VariablesSecret.Name, Namespace: o.Namespace},
+	}
+
 	Expect(o.client.Get(o.ctx, ObjectKeyFromObject(o.ConfigurationConfigMap), o.ConfigurationConfigMap)).To(Succeed())
 	Expect(o.client.Get(o.ctx, ObjectKeyFromObject(o.StateConfigMap), o.StateConfigMap)).To(Succeed())
 	Expect(o.client.Get(o.ctx, ObjectKeyFromObject(o.VariablesSecret), o.VariablesSecret)).To(Succeed())
