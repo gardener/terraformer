@@ -163,7 +163,12 @@ func (t *Terraformer) execute(command Command) (rErr error) {
 
 	// after a successful execution of destroy command, remove the finalizers from the resources
 	if command == Destroy {
-		if err := t.removeFinalizer(ctx); err != nil {
+		// root context might have been cancelled during terraform execution, but execution was still successful.
+		// use a new background context here, otherwise the finalizers can't be removed
+		finalizerCtx, finalizerCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer finalizerCancel()
+
+		if err := t.removeFinalizer(finalizerCtx); err != nil {
 			return fmt.Errorf("error removing finalizers: %w", err)
 		}
 	}

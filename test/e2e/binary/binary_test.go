@@ -22,6 +22,10 @@ import (
 	testutils "github.com/gardener/terraformer/test/utils"
 )
 
+const (
+	expectedFinalizer = "gardener.cloud/terraformer"
+)
+
 var _ = Describe("terraformer", func() {
 	var (
 		writer                   io.Writer
@@ -311,6 +315,69 @@ var _ = Describe("terraformer", func() {
 				Eventually(session.Err).Should(Say(fmt.Sprintf("fake terraform received signal: %s", syscall.SIGINT.String())))
 				Eventually(session.Err).Should(Say("terraform process finished successfully"))
 				Eventually(session).Should(gexec.Exit(0))
+			})
+		})
+
+		Describe("finalizer handling", func() {
+			BeforeEach(func() {
+				overwriteSleepDuration = testutils.OverwriteSleepDuration("200ms")
+
+				args = append(args,
+					"--namespace="+testObjs.Namespace,
+					"--configuration-configmap-name="+testObjs.ConfigurationConfigMap.Name,
+					"--state-configmap-name="+testObjs.StateConfigMap.Name,
+					"--variables-secret-name="+testObjs.VariablesSecret.Name,
+					"--kubeconfig="+kubeconfigFile,
+				)
+			})
+
+			It("should add finalizer on apply", func() {
+				cmd := exec.Command(pathToTerraformer, append(args, "apply")...)
+				cmd.Env = fakeTerraform.TerraformerEnv()
+
+				session, err := gexec.Start(cmd, writer, writer)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session.Err).Should(Say("successfully updated finalizers"))
+
+				Eventually(session.Err).Should(Say("terraform process finished successfully"))
+				Eventually(session).Should(gexec.Exit(0))
+
+				testObjs.Refresh()
+				Expect(testObjs.ConfigurationConfigMap.Finalizers).To(ContainElement(expectedFinalizer))
+				Expect(testObjs.StateConfigMap.Finalizers).To(ContainElement(expectedFinalizer))
+				Expect(testObjs.VariablesSecret.Finalizers).To(ContainElement(expectedFinalizer))
+			})
+
+			It("should remove finalizer on destroy even when interrupted", func() {
+				cmd := exec.Command(pathToTerraformer, append(args, "destroy")...)
+				cmd.Env = fakeTerraform.TerraformerEnv()
+
+				session, err := gexec.Start(cmd, writer, writer)
+				Expect(err).NotTo(HaveOccurred())
+
+				// wait for finalizers to be added
+				Eventually(session.Err).Should(Say("successfully updated finalizers"))
+				testObjs.Refresh()
+				Expect(testObjs.ConfigurationConfigMap.Finalizers).To(ContainElement(expectedFinalizer))
+				Expect(testObjs.StateConfigMap.Finalizers).To(ContainElement(expectedFinalizer))
+				Expect(testObjs.VariablesSecret.Finalizers).To(ContainElement(expectedFinalizer))
+
+				// interrupt during running terraform op
+				Eventually(session.Err).Should(Say("doing some long running IaaS ops"))
+				session.Interrupt()
+				Eventually(session.Err).Should(Say("interrupt received"))
+
+				// wait for terraformer to exit
+				Eventually(session.Err).Should(Say("terraform process finished successfully"))
+				Eventually(session.Err).Should(Say("successfully updated finalizers"))
+				Eventually(session).Should(gexec.Exit(0))
+
+				// expect that finalizers are removed after successful terraform execution
+				testObjs.Refresh()
+				Expect(testObjs.ConfigurationConfigMap.Finalizers).NotTo(ContainElement(expectedFinalizer))
+				Expect(testObjs.StateConfigMap.Finalizers).NotTo(ContainElement(expectedFinalizer))
+				Expect(testObjs.VariablesSecret.Finalizers).NotTo(ContainElement(expectedFinalizer))
 			})
 		})
 
