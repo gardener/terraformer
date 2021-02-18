@@ -42,12 +42,12 @@ terraformer:
             target: terraformer
             build_args:
               PROVIDER: openstack
-          terraformer-packet:
+          terraformer-equinixmetal:
             registry: 'gcr-readwrite'
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer-packet'
+            image: 'eu.gcr.io/gardener-project/gardener/terraformer-equinixmetal'
             target: terraformer
             build_args:
-              PROVIDER: packet
+              PROVIDER: equinixmetal
     steps:
       verify:
         image: 'eu.gcr.io/gardener-project/3rd/golang:1.15.5'
