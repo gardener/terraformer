@@ -7,7 +7,14 @@ terraform {
 }
 
 providers {
-  packet      = ["2.3.0"]
-  template    = ["2.1.2"]
-  null        = ["2.1.2"]
+  metal     = {
+    versions = ["1.0.0"]
+    source = "equinix/metal"
+  }
+  template  = {
+    versions = ["2.1.2"]
+  }
+  null      = {
+    versions = ["2.1.2"]
+  }
 }
