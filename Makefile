@@ -101,7 +101,7 @@ docker-images:
 	@$(MAKE) docker-image PROVIDER=gcp
 	@$(MAKE) docker-image PROVIDER=openstack
 	@$(MAKE) docker-image PROVIDER=equinixmetal
-	@$(MAKE) docker-image PROVIDER=none
+	@$(MAKE) docker-image PROVIDER=slim
 
 .PHONY: docker-image
 docker-image:
@@ -122,7 +122,7 @@ docker-push-all:
 	@$(MAKE) docker-push PROVIDER=gcp
 	@$(MAKE) docker-push PROVIDER=openstack
 	@$(MAKE) docker-push PROVIDER=equinixmetal
-	@$(MAKE) docker-push PROVIDER=none
+	@$(MAKE) docker-push PROVIDER=slim
 
 .PHONY: docker-push
 docker-push:

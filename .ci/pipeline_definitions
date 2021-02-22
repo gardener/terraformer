@@ -48,12 +48,12 @@ terraformer:
             target: terraformer
             build_args:
               PROVIDER: equinixmetal
-          terraformer-none:
+          terraformer-slim:
             registry: 'gcr-readwrite'
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer-none'
+            image: 'eu.gcr.io/gardener-project/gardener/terraformer-slim'
             target: terraformer
             build_args:
-              PROVIDER: none
+              PROVIDER: slim
     steps:
       verify:
         image: 'eu.gcr.io/gardener-project/3rd/golang:1.15.5'
