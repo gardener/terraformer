@@ -246,8 +246,8 @@ func (t *Terraformer) removeFinalizer(ctx context.Context) error {
 	return t.updateObjects(ctx, logger, controllerutil.RemoveFinalizer)
 }
 
-func (t *Terraformer) terraformObjects() []controllerutil.Object {
-	return []controllerutil.Object{
+func (t *Terraformer) terraformObjects() []client.Object {
+	return []client.Object{
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: t.config.Namespace,
@@ -269,7 +269,7 @@ func (t *Terraformer) terraformObjects() []controllerutil.Object {
 	}
 }
 
-func (t *Terraformer) updateObjects(ctx context.Context, log logr.Logger, patchObj func(controllerutil.Object, string)) error {
+func (t *Terraformer) updateObjects(ctx context.Context, log logr.Logger, patchObj func(client.Object, string)) error {
 	allErrors := &multierror.Error{
 		ErrorFormat: utils.NewErrorFormatFuncWithPrefix("failed to update object finalizer"),
 	}
@@ -290,12 +290,11 @@ func (t *Terraformer) updateObjects(ctx context.Context, log logr.Logger, patchO
 	return err
 }
 
-func (t *Terraformer) updateObjectFinalizers(ctx context.Context, log logr.Logger, obj controllerutil.Object, patchObj func(controllerutil.Object, string)) error {
-	key, err := client.ObjectKeyFromObject(obj)
-	if err != nil {
-		log.Error(err, "failed to construct key", "object", obj)
-		return err
-	}
+func (t *Terraformer) updateObjectFinalizers(ctx context.Context, log logr.Logger, obj client.Object, patchObj func(client.Object, string)) error {
+	var (
+		key = client.ObjectKeyFromObject(obj)
+		err error
+	)
 
 	for i := 0; i < maxPatchRetries; i++ {
 		err = t.client.Get(ctx, key, obj)
