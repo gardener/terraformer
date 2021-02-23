@@ -99,6 +99,40 @@ var _ = Describe("Terraformer", func() {
 				Expect(testClient.Delete(ctx, testObjs.ConfigurationConfigMap)).To(Succeed())
 				Expect(tf.Run(terraformer.Apply)).To(MatchError(ContainSubstring("not found")))
 			})
+			It("should succeed because state is empty", func() {
+				emptyState := testObjs.StateConfigMap
+				emptyState.Data = nil
+				emptyState.SetFinalizers([]string{terraformer.TerraformerFinalizer})
+
+				Expect(testClient.Update(ctx, emptyState)).To(Succeed())
+				Expect(tf.Run(terraformer.Destroy)).To(Succeed())
+				testObjs.Refresh()
+				Expect(testObjs.StateConfigMap.Finalizers).To(Not(ContainElement(terraformer.TerraformerFinalizer)))
+			})
+			It("should succeed because state value is nil", func() {
+				emptyState := testObjs.StateConfigMap
+				emptyState.Data = map[string]string{
+					"terraform.tfstate": "",
+				}
+				emptyState.SetFinalizers([]string{terraformer.TerraformerFinalizer})
+
+				Expect(testClient.Update(ctx, emptyState)).To(Succeed())
+				Expect(tf.Run(terraformer.Destroy)).To(Succeed())
+				testObjs.Refresh()
+				Expect(testObjs.StateConfigMap.Finalizers).To(Not(ContainElement(terraformer.TerraformerFinalizer)))
+			})
+			It("should succeed because state key is not available", func() {
+				emptyState := testObjs.StateConfigMap
+				emptyState.Data = map[string]string{
+					"foo": "bar",
+				}
+				emptyState.SetFinalizers([]string{terraformer.TerraformerFinalizer})
+
+				Expect(testClient.Update(ctx, emptyState)).To(Succeed())
+				Expect(tf.Run(terraformer.Destroy)).To(Succeed())
+				testObjs.Refresh()
+				Expect(testObjs.StateConfigMap.Finalizers).To(Not(ContainElement(terraformer.TerraformerFinalizer)))
+			})
 		})
 
 		Context("successful terraform execution", func() {

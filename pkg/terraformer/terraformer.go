@@ -111,6 +111,19 @@ func (t *Terraformer) execute(command Command) (rErr error) {
 		}
 	}()
 
+	if command == Destroy {
+		// Sometimes a state is empty because the Terraformer has never run successfully.
+		// Hence, we take a shortcut here and just remove the finalizer.
+		emptyState, err := t.isStateEmpty(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to check if state is empty: %w", err)
+		}
+
+		if emptyState {
+			return t.removeFinalizer()
+		}
+	}
+
 	if err := t.EnsureTFDirs(); err != nil {
 		return fmt.Errorf("failed to create needed directories: %w", err)
 	}
@@ -163,12 +176,7 @@ func (t *Terraformer) execute(command Command) (rErr error) {
 
 	// after a successful execution of destroy command, remove the finalizers from the resources
 	if command == Destroy {
-		// root context might have been cancelled during terraform execution, but execution was still successful.
-		// use a new background context here, otherwise the finalizers can't be removed
-		finalizerCtx, finalizerCancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer finalizerCancel()
-
-		if err := t.removeFinalizer(finalizerCtx); err != nil {
+		if err := t.removeFinalizer(); err != nil {
 			return fmt.Errorf("error removing finalizers: %w", err)
 		}
 	}
@@ -241,9 +249,28 @@ func (t *Terraformer) addFinalizer(ctx context.Context) error {
 
 }
 
-func (t *Terraformer) removeFinalizer(ctx context.Context) error {
+func (t *Terraformer) removeFinalizer() error {
+	// root context might have been cancelled during terraform execution, but execution was still successful.
+	// use a new background context here, otherwise the finalizers can't be removed
+	finalizerCtx, finalizerCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer finalizerCancel()
+
 	logger := t.stepLogger("remove-finalizer")
-	return t.updateObjects(ctx, logger, controllerutil.RemoveFinalizer)
+	return t.updateObjects(finalizerCtx, logger, controllerutil.RemoveFinalizer)
+}
+
+func (t *Terraformer) isStateEmpty(ctx context.Context) (bool, error) {
+	state := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      t.config.StateConfigMapName,
+			Namespace: t.config.Namespace,
+		},
+	}
+	if err := t.client.Get(ctx, client.ObjectKeyFromObject(state), state); client.IgnoreNotFound(err) != nil {
+		return false, err
+	}
+	data, ok := state.Data[tfStateKey]
+	return !ok || len(data) == 0, nil
 }
 
 func (t *Terraformer) terraformObjects() []client.Object {
