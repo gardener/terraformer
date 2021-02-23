@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ############# golang-base
-FROM eu.gcr.io/gardener-project/3rd/golang:1.15.7 AS golang-base
+FROM eu.gcr.io/gardener-project/3rd/golang:1.16.0 AS golang-base
 
 ############# terraform-base
 FROM golang-base AS terraform-base
