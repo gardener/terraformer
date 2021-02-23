@@ -55,7 +55,7 @@ ENV TF_RELEASE=true
 
 COPY --from=builder /go/bin/terraformer /
 COPY --from=terraform-base /tmp/terraformer/terraform /bin/terraform
-COPY --from=terraform-base /tmp/terraformer/terraform-provider* /terraform-providers/
+COPY --from=terraform-base /tmp/terraformer/tfproviders/ /terraform-providers/
 
 ENTRYPOINT ["/terraformer"]
 
@@ -66,7 +66,7 @@ WORKDIR /go/src/github.com/gardener/terraformer
 VOLUME /go/src/github.com/gardener/terraformer
 
 COPY --from=terraform-base /tmp/terraformer/terraform /bin/terraform
-COPY --from=terraform-base /tmp/terraformer/terraform-provider* /terraform-providers/
+COPY --from=terraform-base /tmp/terraformer/tfproviders/ /terraform-providers/
 
 COPY vendor vendor
 COPY Makefile VERSION go.mod go.sum ./
