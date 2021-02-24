@@ -56,7 +56,7 @@ terraformer:
               PROVIDER: slim
     steps:
       verify:
-        image: 'eu.gcr.io/gardener-project/3rd/golang:1.16.0'
+        image: 'eu.gcr.io/gardener-project/3rd/golang:1.15.8'
   jobs:
     head-update:
       traits:
