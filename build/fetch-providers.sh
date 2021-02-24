@@ -13,4 +13,5 @@ terraform-bundle \
 BUNDLE="$(ls -t terraform*.zip | head -1)"
 unzip -n $BUNDLE
 
-find plugins -name "terraform-provider*" | xargs -I % mv % .
+mkdir "tfproviders"
+find . -name "terraform-provider*" | xargs -I % mv % ./tfproviders/
