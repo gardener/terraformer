@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // KeyNotFoundError is returned from a Store.Read if the store does not contain a value for the requested key.
@@ -26,7 +26,7 @@ func (k KeyNotFoundError) Error() string {
 // under a certain key.
 type Store interface {
 	// Object returns the underlying Object to pass it to a client (for retrieving and updating).
-	Object() controllerutil.Object
+	Object() client.Object
 	// Read returns a reader for reading the contents stored under the given key.
 	Read(key string) (io.Reader, error)
 	// Store reads the given data and stores it under the given key.
@@ -41,7 +41,7 @@ type ConfigMapStore struct {
 }
 
 // Object returns the underlying ConfigMap.
-func (c *ConfigMapStore) Object() controllerutil.Object {
+func (c *ConfigMapStore) Object() client.Object {
 	return c.ConfigMap
 }
 
@@ -79,7 +79,7 @@ type SecretStore struct {
 }
 
 // Object returns the underlying Secret.
-func (s *SecretStore) Object() controllerutil.Object {
+func (s *SecretStore) Object() client.Object {
 	return s.Secret
 }
 

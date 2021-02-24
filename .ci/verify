@@ -9,4 +9,9 @@ cd "$(dirname $0)/.."
 git config --global user.email "gardener@sap.com"
 git config --global user.name "Gardener CI/CD"
 
+# Required because go generate w/ GO111MODULE=off cannot resolve vendor dependencies outside of GOPATH.
+mkdir -p /go/src/github.com/gardener/terraformer
+cp -r . /go/src/github.com/gardener/terraformer
+cd /go/src/github.com/gardener/terraformer
+
 make verify-extended

@@ -19,6 +19,7 @@ import (
 	"github.com/onsi/gomega/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // DeepEqual returns a Gomega matcher which checks whether the expected object is deeply equal with the object it is
@@ -83,5 +84,29 @@ func BeNoMatchError() types.GomegaMatcher {
 	return &kubernetesErrors{
 		checkFunc: meta.IsNoMatchError,
 		message:   "NoMatch",
+	}
+}
+
+// BeMissingKindError checks if error is a MissingKindError.
+func BeMissingKindError() types.GomegaMatcher {
+	return &kubernetesErrors{
+		checkFunc: runtime.IsMissingKind,
+		message:   "Object 'Kind' is missing",
+	}
+}
+
+// BeInternalServerError checks if error is a InternalServerError.
+func BeInternalServerError() types.GomegaMatcher {
+	return &kubernetesErrors{
+		checkFunc: apierrors.IsInternalError,
+		message:   "",
+	}
+}
+
+// BeInvalidError checks if error is an InvalidError.
+func BeInvalidError() types.GomegaMatcher {
+	return &kubernetesErrors{
+		checkFunc: apierrors.IsInvalid,
+		message:   "Invalid",
 	}
 }
