@@ -6,6 +6,8 @@ terraformer:
       version:
         preprocess: 'inject-commit-hash'
         inject_effective_version: true
+      options:
+        public_build_logs: true
       publish:
         dockerimages:
           terraformer:
