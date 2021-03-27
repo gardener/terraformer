@@ -7,7 +7,7 @@ terraform {
 }
 
 providers {
-  aws         = ["3.32.0"]
+  aws         = ["3.34.0"]
   template    = ["2.1.2"]
   null        = ["2.1.2"]
 }
