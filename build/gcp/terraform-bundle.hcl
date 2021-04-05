@@ -7,8 +7,8 @@ terraform {
 }
 
 providers {
-  google      = ["3.59.0"]
-  google-beta = ["3.59.0"]
+  google      = ["3.62.0"]
+  google-beta = ["3.62.0"]
   template    = ["2.1.2"]
   null        = ["2.1.2"]
 }
