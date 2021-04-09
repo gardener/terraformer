@@ -9,6 +9,7 @@ terraformer:
       options:
         public_build_logs: true
       publish:
+        oci-builder: 'kaniko'
         dockerimages:
           terraformer:
             registry: 'gcr-readwrite'
@@ -58,7 +59,7 @@ terraformer:
               PROVIDER: slim
     steps:
       verify:
-        image: 'eu.gcr.io/gardener-project/3rd/golang:1.16.2'
+        image: 'golang:1.16.2'
   jobs:
     head-update:
       traits:
@@ -72,7 +73,7 @@ terraformer:
         test-e2e:
           execute:
           - test-e2e.sh
-          depends:
+          trait_depends:
           - publish
           image: 'eu.gcr.io/gardener-project/gardener/testmachinery/testmachinery-run:stable'
       traits:
@@ -88,6 +89,7 @@ terraformer:
               slack_cfg_name: 'scp_workspace'
         component_descriptor: ~
         publish:
+          oci-builder: 'kaniko'
           dockerimages:
             terraformer:
               tag_as_latest: true
