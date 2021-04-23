@@ -12,7 +12,7 @@ providers {
   google      = ["3.62.0"]
   google-beta = ["3.62.0"]
   openstack   = ["1.37.0"]
-  alicloud    = ["1.103.0"]
+  alicloud    = ["1.121.2"]
   packet      = ["2.3.0"]
   template    = ["2.1.2"]
   null        = ["2.1.2"]
