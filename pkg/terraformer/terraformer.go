@@ -5,6 +5,7 @@
 package terraformer
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -187,6 +188,14 @@ func (t *Terraformer) execute(command Command) (rErr error) {
 func (t *Terraformer) executeTerraform(ctx context.Context, command Command) error {
 	log := t.stepLogger("executeTerraform")
 
+	// open termination log file already to ensure we can write to it. If we can't write to it, we should exit early
+	// instead of running terraform from which we can't properly transport the failure logs
+	terminationLogFile, err := os.OpenFile(t.paths.TerminationMessagePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer terminationLogFile.Close()
+
 	args := []string{string(command)}
 
 	switch command {
@@ -204,9 +213,12 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command) err
 
 	log.Info("executing terraform", "command", command, "args", strings.Join(args[1:], " "))
 	tfCmd := exec.Command(TerraformBinary, args...)
-	// redirect all terraform output to stderr (same as logs)
-	tfCmd.Stdout = Stderr
-	tfCmd.Stderr = Stderr
+
+	logBuffer := &bytes.Buffer{}
+	terraformOutput := io.MultiWriter(Stderr, logBuffer)
+	// redirect all terraform output to stderr (same as logs) and temporary buffer
+	tfCmd.Stdout = terraformOutput
+	tfCmd.Stderr = terraformOutput
 
 	if err := tfCmd.Start(); err != nil {
 		return err
@@ -236,6 +248,13 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command) err
 
 	if err := tfCmd.Wait(); err != nil {
 		log.Error(err, "terraform process finished with error", "command", command)
+
+		// copy terraform logs to termination log file for error code detection
+		if _, copyErr := io.Copy(terminationLogFile, logBuffer); copyErr != nil {
+			// don't return copy error here to transport the execution error
+			log.Error(copyErr, "failed to copy terraform logs to termination log", "terminationLogFile", terminationLogFile)
+		}
+
 		return utils.WithExitCode{Code: tfCmd.ProcessState.ExitCode(), Underlying: err}
 	}
 

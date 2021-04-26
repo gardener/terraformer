@@ -23,6 +23,11 @@ type PathSet struct {
 	// ProvidersDir is the directory which contains the provider plugin binaries
 	ProvidersDir string
 
+	// TerminationMessagePath is the file, which the termination log should be written to.
+	// Should be used as Container.terminationMessagePath in the terraformer pod spec,
+	// see https://kubernetes.io/docs/tasks/debug-application-cluster/determine-reason-pod-failure/
+	TerminationMessagePath string
+
 	// VarsPath is the complete path the the variables values file
 	VarsPath string
 	// StatePath is the complete path the the state file
@@ -32,10 +37,11 @@ type PathSet struct {
 // DefaultPaths returns the default PathSet used in terraformer
 func DefaultPaths() *PathSet {
 	p := &PathSet{
-		ConfigDir:    "/tf",
-		VarsDir:      "/tfvars",
-		StateDir:     "/tfstate",
-		ProvidersDir: "/terraform-providers",
+		ConfigDir:              "/tf",
+		VarsDir:                "/tfvars",
+		StateDir:               "/tfstate",
+		ProvidersDir:           "/terraform-providers",
+		TerminationMessagePath: "/terraform-termination-log",
 	}
 	p.VarsPath = path.Join(p.VarsDir, tfVarsKey)
 	p.StatePath = path.Join(p.StateDir, tfStateKey)
@@ -47,12 +53,13 @@ func DefaultPaths() *PathSet {
 // This is used for testing purposes to use paths located e.g. under temporary directories.
 func (p *PathSet) WithBaseDir(baseDir string) *PathSet {
 	return &PathSet{
-		ConfigDir:    filepath.Join(baseDir, p.ConfigDir),
-		VarsDir:      filepath.Join(baseDir, p.VarsDir),
-		StateDir:     filepath.Join(baseDir, p.StateDir),
-		ProvidersDir: filepath.Join(baseDir, p.ProvidersDir),
-		VarsPath:     filepath.Join(baseDir, p.VarsPath),
-		StatePath:    filepath.Join(baseDir, p.StatePath),
+		ConfigDir:              filepath.Join(baseDir, p.ConfigDir),
+		VarsDir:                filepath.Join(baseDir, p.VarsDir),
+		StateDir:               filepath.Join(baseDir, p.StateDir),
+		ProvidersDir:           filepath.Join(baseDir, p.ProvidersDir),
+		TerminationMessagePath: filepath.Join(baseDir, p.TerminationMessagePath),
+		VarsPath:               filepath.Join(baseDir, p.VarsPath),
+		StatePath:              filepath.Join(baseDir, p.StatePath),
 	}
 }
 
