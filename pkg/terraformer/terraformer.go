@@ -196,7 +196,8 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command) err
 	}
 	defer terminationLogFile.Close()
 
-	args := []string{string(command)}
+	// disable colors, which will look weird in termination message, k8s status fields and so on
+	args := []string{string(command), "-no-color"}
 
 	switch command {
 	case Init:
