@@ -53,9 +53,9 @@ WORKDIR /
 ENV TF_DEV=true
 ENV TF_RELEASE=true
 
-COPY --from=builder /go/bin/terraformer /
 COPY --from=terraform-base /tmp/terraformer/terraform /bin/terraform
 COPY --from=terraform-base /tmp/terraformer/tfproviders/ /terraform-providers/
+COPY --from=builder /go/bin/terraformer /
 
 ENTRYPOINT ["/terraformer"]
 
