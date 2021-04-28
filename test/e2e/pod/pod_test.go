@@ -80,7 +80,11 @@ var _ = Describe("Pod E2E test", func() {
 			By("deploying terraformer destroy pod")
 			pod, err := deployTerraformerPod(ctx, "destroy")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(waitForPod(ctx, pod, podTimeout)).To(Succeed())
+
+			exitCode, terminationMessage, err := waitForPod(ctx, pod, podTimeout)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(exitCode).To(BeEquivalentTo(0))
+			Expect(terminationMessage).To(BeEmpty())
 
 			By("verifying resource deletion on AWS")
 			verifyDeletionAWS(ctx, keyPairName)
@@ -90,7 +94,7 @@ var _ = Describe("Pod E2E test", func() {
 		}()
 
 		By("deploying cloudprovider secret into namespace")
-		Expect(deployCloudProviderSecret(ctx)).To(Succeed())
+		Expect(deployCloudProviderSecret(ctx, *accessKeyID, *secretAccessKey)).To(Succeed())
 
 		By("deploying terraformer config into namespace")
 		Expect(deployTerraformConfig(ctx)).To(Succeed())
@@ -98,7 +102,11 @@ var _ = Describe("Pod E2E test", func() {
 		By("deploying terraformer apply pod")
 		pod, err := deployTerraformerPod(ctx, "apply")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(waitForPod(ctx, pod, podTimeout)).To(Succeed())
+
+		exitCode, terminationMessage, err := waitForPod(ctx, pod, podTimeout)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(exitCode).To(BeEquivalentTo(0))
+		Expect(terminationMessage).To(BeEmpty())
 
 		By("verifying resource creation on AWS")
 		keyPairName = verifyCreationAWS(ctx)
@@ -106,17 +114,36 @@ var _ = Describe("Pod E2E test", func() {
 		By("verifying creation in state ConfigMap")
 		verifyStateConfigMapCreation()
 	})
+
+	It("should fail because of invalid credentials", func() {
+		const fakeSecretAccessKey = "invalid"
+
+		By("deploying invalid cloudprovider secret into namespace")
+		Expect(deployCloudProviderSecret(ctx, *accessKeyID, fakeSecretAccessKey)).To(Succeed())
+
+		By("deploying terraformer config into namespace")
+		Expect(deployTerraformConfig(ctx)).To(Succeed())
+
+		By("deploying terraformer apply pod")
+		pod, err := deployTerraformerPod(ctx, "apply")
+		Expect(err).NotTo(HaveOccurred())
+
+		exitCode, terminationMessage, err := waitForPod(ctx, pod, podTimeout)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(exitCode).To(BeEquivalentTo(1))
+		Expect(terminationMessage).To(ContainSubstring("error validating provider credentials"))
+	})
 })
 
-func deployCloudProviderSecret(ctx context.Context) error {
+func deployCloudProviderSecret(ctx context.Context, accessKeyID, secretAccessKey string) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cloudProviderSecretName,
 			Namespace: testObjs.Namespace,
 		},
 		Data: map[string][]byte{
-			keyAccessKeyID:     []byte(*accessKeyID),
-			keySecretAccessKey: []byte(*secretAccessKey),
+			keyAccessKeyID:     []byte(accessKeyID),
+			keySecretAccessKey: []byte(secretAccessKey),
 		},
 	}
 	return testClient.Create(ctx, secret)
@@ -136,7 +163,10 @@ resource "aws_key_pair" "keypair" {
   public_key = "` + sshPublicKey + `"
 }
 `
-	testObjs.ConfigurationConfigMap.Data[testutils.ConfigVarsKey] = `variable "ACCESS_KEY_ID" {
+	// append to test config instead of replacing it (already contains tf var declaration `SOME_VAR`),
+	// passing values for undeclared tf var is deprecated and will become an error in a terraform future release.
+	testObjs.ConfigurationConfigMap.Data[testutils.ConfigVarsKey] += `
+variable "ACCESS_KEY_ID" {
   description = "AWS Access Key ID of technical user"
   type        = string
 }
@@ -216,6 +246,7 @@ func deployTerraformerPod(ctx context.Context, command string) (*corev1.Pod, err
 						},
 					},
 				}},
+				TerminationMessagePath: "/terraform-termination-log",
 			}},
 			RestartPolicy:                 corev1.RestartPolicyNever,
 			ServiceAccountName:            terraformerName,
@@ -230,14 +261,14 @@ func deployTerraformerPod(ctx context.Context, command string) (*corev1.Pod, err
 	return pod, nil
 }
 
-func waitForPod(ctx context.Context, pod *corev1.Pod, timeout time.Duration) error {
-	exitCode := int32(-1)
+func waitForPod(ctx context.Context, pod *corev1.Pod, timeout time.Duration) (exitCode int32, terminationMessage string, err error) {
+	exitCode = int32(-1)
 	pollCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	podLog := log.WithValues("pod", testutils.ObjectKeyFromObject(pod))
 
-	err := wait.PollUntil(5*time.Second, func() (done bool, err error) {
+	err = wait.PollUntil(5*time.Second, func() (done bool, err error) {
 		podLog.Info("waiting for terraformer pod to be completed...")
 		err = testClient.Get(pollCtx, testutils.ObjectKeyFromObject(pod), pod)
 		if apierrors.IsNotFound(err) {
@@ -258,6 +289,7 @@ func waitForPod(ctx context.Context, pod *corev1.Pod, timeout time.Duration) err
 		if (phase == corev1.PodSucceeded || phase == corev1.PodFailed) && len(containerStatuses) > 0 {
 			if containerStateTerminated := containerStatuses[0].State.Terminated; containerStateTerminated != nil {
 				exitCode = containerStateTerminated.ExitCode
+				terminationMessage = containerStateTerminated.Message
 			}
 			return true, nil
 		}
@@ -266,15 +298,12 @@ func waitForPod(ctx context.Context, pod *corev1.Pod, timeout time.Duration) err
 		return false, nil
 	}, pollCtx.Done())
 	if err != nil {
-		return fmt.Errorf("error waiting for terraformer pod to be completed: %w", err)
+		err = fmt.Errorf("error waiting for terraformer pod to be completed: %w", err)
+		return
 	}
 
-	if exitCode == 0 {
-		podLog.Info("terraformer pod completed successfully")
-		return nil
-	}
-
-	return fmt.Errorf("terraformer pod finished with error: exit code %d", exitCode)
+	podLog.Info("terraformer pod terminated", "exitCode", exitCode, "terminationMessage", terminationMessage)
+	return
 }
 
 func createOrUpdateTerraformerAuth(ctx context.Context) error {

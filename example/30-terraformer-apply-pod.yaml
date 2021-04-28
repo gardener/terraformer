@@ -12,7 +12,7 @@ spec:
   activeDeadlineSeconds: 1800
   containers:
   - name: terraform
-    image: eu.gcr.io/gardener-project/gardener/terraformer:v2.0.0
+    image: eu.gcr.io/gardener-project/gardener/terraformer:v2.6.0
     imagePullPolicy: IfNotPresent
     command:
     - /terraformer
@@ -24,6 +24,7 @@ spec:
     resources:
       requests:
         cpu: 100m
+    terminationMessagePath: /terraform-termination-log
   restartPolicy: Never
   serviceAccountName: terraformer
   terminationGracePeriodSeconds: 600

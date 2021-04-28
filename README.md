@@ -34,6 +34,38 @@ Apart from dealing with Terraform configuration and state, Terraformer also hand
 signals. It will try to relay `SIGINT` and `SIGTERM` to the running Terraform process in order to stop the ongoing
 infrastructure operations on Pod deletion.
 
+## Termination log
+
+If the Terraform command execution fails (e.g. because of invalid credentials or similar), Terraformer will copy
+Terraform's logs to `$base_dir/terraform-termination-log` (where `$base_dir` is the directory specified in the
+`--base-dir` command line flag (defaults to `/`)). Controllers deploying Terraformer Pods for infrastructure management
+can set `spec.containers[].terminationMessagePath` in the `Pod` specification to this file path to have the `kubelet`
+populate the `.status.containerStatuses[].lastState.terminated.message` field (see this [doc](https://kubernetes.io/docs/tasks/debug-application-cluster/determine-reason-pod-failure/#customizing-the-termination-message)
+for reference). It can then be used to detect error codes from the Terraform logs without fetching all Pods logs,
+that also include info messages from Terraformer.
+
+The Pod status will then look similar to this:
+
+```yaml
+status:
+  containerStatuses:
+  - name: terraformer
+    ready: false
+    restartCount: 0
+    started: false
+    state:
+      terminated:
+        exitCode: 1
+        finishedAt: "2021-04-26T10:28:40Z"
+        message: "\nError: error configuring Terraform AWS Provider: error validating
+          provider credentials: error calling sts:GetCallerIdentity: SignatureDoesNotMatch:
+          The request signature we calculated does not match the signature you provided.
+          Check your AWS Secret Access Key and signing method. Consult the service
+          documentation for details.\n\tstatus code: 403, request id: 49163947-9edf-4c44-ae7d-b013b119442a\n\n\n"
+        reason: Error
+        startedAt: "2021-04-26T10:28:32Z"
+```
+
 ## How to run it locally
 
 The `Makefile` specifies targets for running and developing Terraformer locally:
