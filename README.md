@@ -39,8 +39,8 @@ infrastructure operations on Pod deletion.
 If the Terraform command execution fails (e.g. because of invalid credentials or similar), Terraformer will copy
 Terraform's logs to `$base_dir/terraform-termination-log` (where `$base_dir` is the directory specified in the
 `--base-dir` command line flag (defaults to `/`)). Controllers deploying Terraformer Pods for infrastructure management
-can set `Container.terminationMessagePath` to this file path to have the `kubelet` populate the
-`Pod.status.containerStatuses[].lastState.terminated.message` field (see this [doc](https://kubernetes.io/docs/tasks/debug-application-cluster/determine-reason-pod-failure/#customizing-the-termination-message)
+can set `spec.containers[].terminationMessagePath` in the `Pod` specification to this file path to have the `kubelet`
+populate the `.status.containerStatuses[].lastState.terminated.message` field (see this [doc](https://kubernetes.io/docs/tasks/debug-application-cluster/determine-reason-pod-failure/#customizing-the-termination-message)
 for reference). It can then be used to detect error codes from the Terraform logs without fetching all Pods logs,
 that also include info messages from Terraformer.
 

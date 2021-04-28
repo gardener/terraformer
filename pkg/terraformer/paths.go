@@ -24,7 +24,7 @@ type PathSet struct {
 	ProvidersDir string
 
 	// TerminationMessagePath is the file, which the termination log should be written to.
-	// Should be used as Container.terminationMessagePath in the terraformer pod spec,
+	// Should be used as spec.containers[].terminationMessagePath in the terraformer pod spec,
 	// see https://kubernetes.io/docs/tasks/debug-application-cluster/determine-reason-pod-failure/
 	TerminationMessagePath string
 
