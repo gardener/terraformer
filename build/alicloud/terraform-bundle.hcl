@@ -7,7 +7,7 @@ terraform {
 }
 
 providers {
-  alicloud    = ["1.121.2"]
+  alicloud    = ["1.124.0"]
   template    = ["2.1.2"]
   null        = ["2.1.2"]
 }
