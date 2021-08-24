@@ -1,9 +1,10 @@
 # terraformer maintainers
 *   @gardener/gardener-maintainers
 
-/build/all/**       @gardener/gardener-maintainers @gardener-extension-provider-alicloud-maintainers @gardener-extension-provider-aws-maintainers @gardener-extension-provider-azure-maintainers @gardener-extension-provider-gcp-maintainers @gardener-extension-provider-openstack-maintainers
-/build/alicloud/**  @gardener-extension-provider-alicloud-maintainers
-/build/aws/**       @gardener-extension-provider-aws-maintainers
-/build/azure/**     @gardener-extension-provider-azure-maintainers
-/build/gcp/**       @gardener-extension-provider-gcp-maintainers
-/build/openstack/** @gardener-extension-provider-openstack-maintainers
+/build/all/**          @gardener/gardener-maintainers @gardener-extension-provider-alicloud-maintainers @gardener-extension-provider-aws-maintainers @gardener-extension-provider-azure-maintainers @gardener-extension-provider-gcp-maintainers @gardener-extension-provider-openstack-maintainers @gardener-extension-provider-equinix-metal-maintainers
+/build/alicloud/**     @gardener-extension-provider-alicloud-maintainers
+/build/aws/**          @gardener-extension-provider-aws-maintainers
+/build/azure/**        @gardener-extension-provider-azure-maintainers
+/build/gcp/**          @gardener-extension-provider-gcp-maintainers
+/build/openstack/**    @gardener-extension-provider-openstack-maintainers
+/build/equinixmetal/** @gardener-extension-provider-equinix-metal-maintainers
