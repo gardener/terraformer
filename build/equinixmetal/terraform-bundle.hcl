@@ -8,13 +8,7 @@ terraform {
 
 providers {
   metal     = {
-    versions = ["1.0.0"]
+    versions = ["3.1.0"]
     source = "equinix/metal"
-  }
-  template  = {
-    versions = ["2.1.2"]
-  }
-  null      = {
-    versions = ["2.1.2"]
   }
 }
