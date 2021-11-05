@@ -7,13 +7,33 @@ terraform {
 }
 
 providers {
-  aws         = ["3.63.0"]
-  azurerm     = ["2.68.0"]
-  google      = ["3.62.0"]
-  google-beta = ["3.62.0"]
-  openstack   = ["1.37.0"]
-  alicloud    = ["1.124.2"]
-  packet      = ["2.3.0"]
-  template    = ["2.1.2"]
-  null        = ["2.1.2"]
+  aws = {
+    versions = ["3.63.0"]
+  }
+  azurerm = {
+    versions = ["2.68.0"]
+  }
+  google = {
+    versions = ["3.62.0"]
+  }
+  google-beta = {
+    versions = ["3.62.0"]
+  }
+  openstack = {
+    versions = ["1.37.0"]
+    source = "terraform-provider-openstack/openstack"
+  }
+  alicloud = {
+    versions = ["1.124.2"]
+  }
+  metal = {
+    versions = ["3.1.0"]
+    source = "equinix/metal"
+  }
+  template = {
+    versions = ["2.1.2"]
+  }
+  null = {
+    versions = ["2.1.2"]
+  }
 }

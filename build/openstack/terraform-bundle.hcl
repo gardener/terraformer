@@ -7,7 +7,14 @@ terraform {
 }
 
 providers {
-  openstack   = ["1.37.0"]
-  template    = ["2.1.2"]
-  null        = ["2.1.2"]
+  openstack = {
+    versions = ["1.37.0"]
+    source = "terraform-provider-openstack/openstack"
+  }
+  template = {
+    versions = ["2.1.2"]
+  }
+  null = {
+    versions = ["2.1.2"]
+  }
 }

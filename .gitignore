@@ -3,6 +3,7 @@
 /tmp
 /local
 /dev
+/vendor/github.com/gardener/gardener/dev/
 .terraform
 
 *.test
