@@ -70,7 +70,7 @@ func PrepareTestObjects(ctx context.Context, c client.Client, namespacePrefix st
 	o.StateConfigMap = &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{Name: "tf-state", Namespace: o.Namespace},
 		Data: map[string]string{
-			StateKey: `some state`,
+			StateKey: `{"terraform_version":"0.13.7"}`,
 		},
 	}
 	err = o.client.Create(ctx, o.StateConfigMap)
