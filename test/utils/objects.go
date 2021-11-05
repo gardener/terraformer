@@ -36,7 +36,7 @@ func PrepareTestObjects(ctx context.Context, c client.Client, namespacePrefix, t
 		namespacePrefix = "tf-test-"
 	}
 	if terraformVersion == "" {
-		terraformVersion = "0.13.7"
+		terraformVersion = "0.14.11"
 	}
 
 	// create test namespace

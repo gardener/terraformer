@@ -5,6 +5,7 @@
 /dev
 /vendor/github.com/gardener/gardener/dev/
 .terraform
+.terraform.lock.hcl
 
 *.test
 *.coverprofile
