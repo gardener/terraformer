@@ -430,7 +430,7 @@ var _ = Describe("terraformer", func() {
 				It("should return exit code from terraform init", func() {
 					runExitCodeTest("apply", 12)
 					Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-						ContainSubstring("args: init"),
+						ContainSubstring("init"),
 						ContainSubstring("some terraform error"),
 					)), "termination log should contain all terraform logs")
 				})
@@ -449,7 +449,7 @@ var _ = Describe("terraformer", func() {
 				It("should return exit code from terraform apply", func() {
 					runExitCodeTest("apply", 42)
 					Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-						ContainSubstring("args: apply"),
+						ContainSubstring("apply"),
 						ContainSubstring("doing some long running IaaS ops"),
 						ContainSubstring("some terraform error"),
 					)), "termination log should contain all terraform logs")
@@ -457,7 +457,7 @@ var _ = Describe("terraformer", func() {
 				It("should return exit code from terraform destroy", func() {
 					runExitCodeTest("destroy", 43)
 					Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-						ContainSubstring("args: destroy"),
+						ContainSubstring("destroy"),
 						ContainSubstring("doing some long running IaaS ops"),
 						ContainSubstring("some terraform error"),
 					)), "termination log should contain all terraform logs")
@@ -465,7 +465,7 @@ var _ = Describe("terraformer", func() {
 				It("should return exit code from terraform validate", func() {
 					runExitCodeTest("validate", 44)
 					Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-						ContainSubstring("args: validate"),
+						ContainSubstring("validate"),
 						ContainSubstring("doing some long running IaaS ops"),
 						ContainSubstring("some terraform error"),
 					)), "termination log should contain all terraform logs")
@@ -482,8 +482,8 @@ var _ = Describe("terraformer", func() {
 					It("should return exit code from terraform plan", func() {
 						runExitCodeTest("validate", 45)
 						Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-							Not(ContainSubstring("args: validate")),
-							ContainSubstring("args: plan"),
+							Not(ContainSubstring("validate")),
+							ContainSubstring("plan"),
 							ContainSubstring("doing some long running IaaS ops"),
 							ContainSubstring("some terraform error"),
 						)), "termination log should contain all terraform logs")

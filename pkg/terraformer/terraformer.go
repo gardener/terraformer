@@ -237,6 +237,7 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command, par
 	if command == StateReplaceProvider {
 		args = append(args, strings.Split(string(command), " ")...)
 	} else {
+		args = append(args, "-chdir="+t.paths.ConfigDir)
 		args = append(args, string(command))
 	}
 
@@ -258,11 +259,9 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command, par
 
 	if command == StateReplaceProvider {
 		args = append(args, params...)
-	} else {
-		args = append(args, t.paths.ConfigDir)
 	}
 
-	log.Info("executing terraform", "command", command, "args", strings.Join(args[1:], " "))
+	log.Info("executing terraform", "command", command, "args", strings.Join(args, " "))
 	tfCmd := exec.Command(TerraformBinary, args...)
 
 	logBuffer := &bytes.Buffer{}
