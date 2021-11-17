@@ -6,6 +6,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -28,11 +29,14 @@ type TestObjects struct {
 }
 
 // PrepareTestObjects creates a default set of needed API objects for tests
-func PrepareTestObjects(ctx context.Context, c client.Client, namespacePrefix string) *TestObjects {
+func PrepareTestObjects(ctx context.Context, c client.Client, namespacePrefix, terraformVersion string) *TestObjects {
 	o := &TestObjects{ctx: ctx, client: c}
 
 	if namespacePrefix == "" {
 		namespacePrefix = "tf-test-"
+	}
+	if terraformVersion == "" {
+		terraformVersion = "0.13.7"
 	}
 
 	// create test namespace
@@ -70,7 +74,7 @@ func PrepareTestObjects(ctx context.Context, c client.Client, namespacePrefix st
 	o.StateConfigMap = &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{Name: "tf-state", Namespace: o.Namespace},
 		Data: map[string]string{
-			StateKey: `{"terraform_version":"0.13.7"}`,
+			StateKey: fmt.Sprintf(`{"terraform_version":"%s"}`, terraformVersion),
 		},
 	}
 	err = o.client.Create(ctx, o.StateConfigMap)

@@ -26,9 +26,10 @@ func main() {
 	fmt.Println("some terraform output")
 	fmt.Println("args: " + strings.Join(os.Args[1:], " "))
 
-	exitCode := getExpectedExitCode()
+	command := getCommand(os.Args[1:])
+	exitCode := getExpectedExitCode(command)
 
-	if sleepDuration != "" && (len(os.Args) <= 1 || os.Args[1] != "init") {
+	if sleepDuration != "" && command != "" && command != "init" && command != "state" {
 		done := make(chan struct{})
 		defer close(done)
 
@@ -60,7 +61,14 @@ func main() {
 	os.Exit(exitCode)
 }
 
-func getExpectedExitCode() int {
+func getCommand(args []string) string {
+	if len(args) < 1 {
+		return ""
+	}
+	return args[0]
+}
+
+func getExpectedExitCode(command string) int {
 	if expectedExitCodes == "" {
 		return 0
 	}
@@ -73,11 +81,10 @@ func getExpectedExitCode() int {
 	}
 
 	exitCodes := strings.Split(expectedExitCodes, ",")
-	if len(exitCodes) == 0 || len(os.Args) <= 1 || os.Args[1] == "" {
+	if len(exitCodes) == 0 || command == "" {
 		return 0
 	}
 
-	command := os.Args[1]
 	for _, e := range exitCodes {
 		if strings.HasPrefix(e, command+"=") {
 			code, err := strconv.Atoi(strings.TrimPrefix(e, command+"="))
