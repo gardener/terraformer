@@ -7,7 +7,7 @@ terraform {
 }
 
 providers {
-  aws         = ["3.63.0"]
+  aws         = ["3.66.0"]
   azurerm     = ["2.68.0"]
   google      = ["3.62.0"]
   google-beta = ["3.62.0"]
