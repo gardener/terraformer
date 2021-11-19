@@ -7,8 +7,16 @@ terraform {
 }
 
 providers {
-  google      = ["3.62.0"]
-  google-beta = ["3.62.0"]
-  template    = ["2.1.2"]
-  null        = ["2.1.2"]
+  google = {
+    versions = ["3.62.0"]
+  }
+  google-beta = {
+    versions = ["3.62.0"]
+  }
+  template = {
+    versions = ["2.1.2"]
+  }
+  null = {
+    versions = ["2.1.2"]
+  }
 }

@@ -25,5 +25,9 @@ else
   # Above `terraform-bundle` command already maintains such structure, hence, we keep it instead of copying
   # the `terraform-provider` binaries.
   find . -name "*.md" | xargs -I % rm -f %
-  mv ./plugins ./tfproviders/
+  if [ -d ./plugins ]; then
+    mv ./plugins ./tfproviders/
+  else
+    mkdir "tfproviders"
+  fi
 fi

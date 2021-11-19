@@ -29,6 +29,11 @@ const (
 	Validate Command = "validate"
 	// Plan is the terraform `plan` command.
 	Plan Command = "plan"
+	// StateReplaceProvider is the terraform `state` command with the `replace-provider` subcommand.
+	StateReplaceProvider Command = "state replace-provider"
+)
+
+const (
 	// TerraformerFinalizer is the finalizer used by the terraformer on the terraform configmaps and secrets
 	TerraformerFinalizer = "gardener.cloud/terraformer"
 )

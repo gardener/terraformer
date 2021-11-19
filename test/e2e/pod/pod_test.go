@@ -54,7 +54,7 @@ var _ = Describe("Pod E2E test", func() {
 		terraformerImageTag = version.Get().GitVersion
 
 		By("creating test objects")
-		testObjs = testutils.PrepareTestObjects(ctx, testClient, prefix)
+		testObjs = testutils.PrepareTestObjects(ctx, testClient, prefix, "")
 
 		log = runtimelog.Log.WithValues("namespace", testObjs.Namespace)
 		log.Info("using namespace")

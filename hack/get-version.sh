@@ -32,7 +32,7 @@ fi
 # as a dirty work tree.
 # Additionally, it filters out changes to the `VERSION` file, as this is currently the only way to inject the
 # version-to-build in our pipelines (see https://github.com/gardener/cc-utils/issues/431).
-TREE_STATE="$([ -z "$(git status --porcelain 2>/dev/null | grep -vf <(git ls-files --deleted --ignored --exclude-from=.dockerignore) -e 'VERSION')" ] && echo clean || echo dirty)"
+TREE_STATE="$([ -z "$(git status --porcelain 2>/dev/null | grep -vf <(git ls-files -o --deleted --ignored --exclude-from=.dockerignore) -e 'VERSION')" ] && echo clean || echo dirty)"
 
 if [ "$TREE_STATE" = dirty ] ; then
   VERSION="$VERSION-dirty"

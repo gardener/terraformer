@@ -41,8 +41,9 @@ var _ = Describe("Terraformer", func() {
 			paths         *terraformer.PathSet
 			testObjs      *testutils.TestObjects
 
-			resetVars func()
-			logBuffer *gbytes.Buffer
+			resetVars   func()
+			logBuffer   *gbytes.Buffer
+			multiWriter io.Writer
 		)
 
 		BeforeEach(func() {
@@ -58,10 +59,10 @@ var _ = Describe("Terraformer", func() {
 
 			paths = terraformer.DefaultPaths().WithBaseDir(baseDir)
 
-			testObjs = testutils.PrepareTestObjects(ctx, testClient, "")
+			testObjs = testutils.PrepareTestObjects(ctx, testClient, "", "")
 
 			logBuffer = gbytes.NewBuffer()
-			multiWriter := io.MultiWriter(GinkgoWriter, logBuffer)
+			multiWriter = io.MultiWriter(GinkgoWriter, logBuffer)
 			resetVars = test.WithVars(
 				&terraformer.Stderr, multiWriter,
 			)
@@ -83,6 +84,7 @@ var _ = Describe("Terraformer", func() {
 
 		AfterEach(func() {
 			resetVars()
+			testutils.RunCleanupActions()
 		})
 
 		Context("basic tests without terraform binary", func() {
@@ -158,6 +160,8 @@ var _ = Describe("Terraformer", func() {
 			It("should run Apply successfully", func() {
 				Expect(tf.Run(terraformer.Apply)).To(Succeed())
 				Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
+				Eventually(logBuffer).Should(gbytes.Say("args: init"))
+				Eventually(logBuffer).Should(gbytes.Say("args: apply"))
 				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				testObjs.Refresh()
 				Expect(testObjs.ConfigurationConfigMap.Finalizers).To(ContainElement(terraformer.TerraformerFinalizer))
@@ -168,6 +172,8 @@ var _ = Describe("Terraformer", func() {
 			It("should run Destroy successfully", func() {
 				Expect(tf.Run(terraformer.Destroy)).To(Succeed())
 				Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
+				Eventually(logBuffer).Should(gbytes.Say("args: init"))
+				Eventually(logBuffer).Should(gbytes.Say("args: destroy"))
 				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				testObjs.Refresh()
 				Expect(testObjs.ConfigurationConfigMap.Finalizers).ToNot(ContainElement(terraformer.TerraformerFinalizer))
@@ -186,6 +192,9 @@ var _ = Describe("Terraformer", func() {
 			It("should run Validate successfully", func() {
 				Expect(tf.Run(terraformer.Validate)).To(Succeed())
 				Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
+				Eventually(logBuffer).Should(gbytes.Say("args: init"))
+				Eventually(logBuffer).Should(gbytes.Say("args: validate"))
+				Eventually(logBuffer).Should(gbytes.Say("args: plan"))
 				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				Expect(paths.TerminationMessagePath).To(testutils.BeEmptyFile())
 			})
@@ -332,6 +341,117 @@ var _ = Describe("Terraformer", func() {
 						ContainSubstring("doing some long running IaaS ops"),
 						ContainSubstring("some terraform error"),
 					)), "termination log should contain all terraform logs")
+				})
+			})
+		})
+
+		Context("state from terraform 0.12.*", func() {
+			BeforeEach(func() {
+				var err error
+
+				testObjs = testutils.PrepareTestObjects(ctx, testClient, "", "0.12.31")
+
+				tf, err = terraformer.NewTerraformer(
+					&terraformer.Config{
+						Namespace:                  testObjs.Namespace,
+						ConfigurationConfigMapName: testObjs.ConfigurationConfigMap.Name,
+						StateConfigMapName:         testObjs.StateConfigMap.Name,
+						VariablesSecretName:        testObjs.VariablesSecret.Name,
+						RESTConfig:                 restConfig,
+					},
+					zap.New(zap.UseDevMode(true), zap.WriteTo(multiWriter)),
+					paths,
+					clock.RealClock{},
+				)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			Context("successful terraform execution", func() {
+				var (
+					resetBinary func()
+				)
+
+				BeforeEach(func() {
+					fakeTerraform = testutils.NewFakeTerraform(
+						testutils.OverwriteExitCode("0"),
+						testutils.OverwriteSleepDuration("50ms"),
+					)
+
+					resetBinary = test.WithVars(
+						&terraformer.TerraformBinary, fakeTerraform.Path,
+					)
+				})
+
+				AfterEach(func() {
+					resetBinary()
+				})
+
+				It("should run Apply successfully and execute the state replace-provider command", func() {
+					Expect(tf.Run(terraformer.Apply)).To(Succeed())
+					Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
+					Eventually(logBuffer).Should(gbytes.Say("args: state replace-provider"))
+					Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
+					testObjs.Refresh()
+					Expect(paths.TerminationMessagePath).To(testutils.BeEmptyFile())
+				})
+				It("should run Destroy successfully and execute the state replace-provider command", func() {
+					Expect(tf.Run(terraformer.Destroy)).To(Succeed())
+					Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
+					Eventually(logBuffer).Should(gbytes.Say("args: state replace-provider"))
+					Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
+					testObjs.Refresh()
+					Expect(paths.TerminationMessagePath).To(testutils.BeEmptyFile())
+				})
+				It("should run Validate successfully and execute the state replace-provider command", func() {
+					Expect(tf.Run(terraformer.Validate)).To(Succeed())
+					Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
+					Eventually(logBuffer).Should(gbytes.Say("args: state replace-provider"))
+					Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
+					Expect(paths.TerminationMessagePath).To(testutils.BeEmptyFile())
+				})
+			})
+
+			Context("failed terraform execution", func() {
+				var (
+					resetBinary func()
+				)
+
+				BeforeEach(func() {
+					fakeTerraform = testutils.NewFakeTerraform(
+						testutils.OverwriteExitCodeForCommands(
+							"init", "0",
+							"state", "45",
+						),
+					)
+
+					resetBinary = test.WithVars(
+						&terraformer.TerraformBinary, fakeTerraform.Path,
+					)
+				})
+
+				AfterEach(func() {
+					resetBinary()
+				})
+
+				Context("state replace-provider fails", func() {
+					It("should return exit code from terraform state", func() {
+						err := tf.Run(terraformer.Apply)
+						Expect(err).To(MatchError(ContainSubstring("terraform command failed")))
+
+						var withExitCode utils.WithExitCode
+						Expect(errors.As(err, &withExitCode)).To(BeTrue())
+						Expect(withExitCode.ExitCode()).To(Equal(45))
+
+						Eventually(logBuffer).Should(gbytes.Say("some terraform error"))
+						Eventually(logBuffer).Should(gbytes.Say("terraform process finished with error"))
+						Eventually(logBuffer).Should(gbytes.Say("triggering final state update before exiting"))
+						Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
+
+						Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
+							ContainSubstring("args: state replace-provider"),
+							ContainSubstring("some terraform error"),
+						)), "termination log should contain all terraform logs")
+					})
 				})
 			})
 		})

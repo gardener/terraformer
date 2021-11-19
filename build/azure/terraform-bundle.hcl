@@ -7,7 +7,13 @@ terraform {
 }
 
 providers {
-  azurerm     = ["2.68.0"]
-  template    = ["2.1.2"]
-  null        = ["2.1.2"]
+  azurerm = {
+    versions = ["2.68.0"]
+  }
+  template = {
+    versions = ["2.1.2"]
+  }
+  null = {
+    versions = ["2.1.2"]
+  }
 }

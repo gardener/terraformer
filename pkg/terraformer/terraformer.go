@@ -7,6 +7,7 @@ package terraformer
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -34,6 +35,13 @@ import (
 const (
 	// maxPatchRetries define the maximum number of attempts to patch a resource in case of conflict
 	maxPatchRetries = 2
+
+	// terraformVersionKey is the terraform version key in the terraform state JSON
+	terraformVersionKey = "terraform_version"
+	// registry is the terraform registry
+	registry = "registry.terraform.io"
+	// version012Prefix is the prefix for 0.12 versions
+	version012Prefix = "0.12."
 )
 
 var (
@@ -48,6 +56,21 @@ var (
 
 	// SignalNotify allows mocking signal.Notify in tests
 	SignalNotify = signal.Notify
+)
+
+var (
+	// providers is a map from the short provider names (used with terraform 0.12 or lower)
+	// to their sources (used with terraform 0.13 or higher)
+	providers = map[string]string{
+		"aws":         "hashicorp/aws",
+		"azurerm":     "hashicorp/azurerm",
+		"google":      "hashicorp/google",
+		"google-beta": "hashicorp/google-beta",
+		"openstack":   "terraform-provider-openstack/openstack",
+		"alicloud":    "hashicorp/alicloud",
+		"template":    "hashicorp/template",
+		"null":        "hashicorp/null",
+	}
 )
 
 // NewDefaultTerraformer creates a new Terraformer with the default PathSet and logger.
@@ -164,6 +187,20 @@ func (t *Terraformer) execute(command Command) (rErr error) {
 		return fmt.Errorf("error executing terraform %s: %w", Init, err)
 	}
 
+	// get terraform version from state and execute state replace-provider commands if needed
+	terraformVersion, err := t.getTerraformVersionFromState(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting terraform version from state: %w", err)
+	}
+	if strings.HasPrefix(terraformVersion, version012Prefix) {
+		for name, source := range providers {
+			fromProvider, toProvider := fmt.Sprintf("%s/-/%s", registry, name), fmt.Sprintf("%s/%s", registry, source)
+			if err := t.executeTerraform(ctx, StateReplaceProvider, fromProvider, toProvider); err != nil {
+				return fmt.Errorf("error executing terraform %s %s %s: %w", StateReplaceProvider, fromProvider, toProvider, err)
+			}
+		}
+	}
+
 	// execute main terraform command
 	if err := t.executeTerraform(ctx, command); err != nil {
 		return fmt.Errorf("error executing terraform %s: %w", command, err)
@@ -185,7 +222,7 @@ func (t *Terraformer) execute(command Command) (rErr error) {
 	return nil
 }
 
-func (t *Terraformer) executeTerraform(ctx context.Context, command Command) error {
+func (t *Terraformer) executeTerraform(ctx context.Context, command Command, params ...string) error {
 	log := t.stepLogger("executeTerraform")
 
 	// open termination log file already to ensure we can write to it. If we can't write to it, we should exit early
@@ -196,8 +233,15 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command) err
 	}
 	defer terminationLogFile.Close()
 
+	var args []string
+	if command == StateReplaceProvider {
+		args = append(args, strings.Split(string(command), " ")...)
+	} else {
+		args = append(args, string(command))
+	}
+
 	// disable colors, which will look weird in termination message, k8s status fields and so on
-	args := []string{string(command), "-no-color"}
+	args = append(args, "-no-color")
 
 	switch command {
 	case Init:
@@ -208,9 +252,15 @@ func (t *Terraformer) executeTerraform(ctx context.Context, command Command) err
 		args = append(args, "-var-file="+t.paths.VarsPath, "-parallelism=4", "-auto-approve", "-state="+t.paths.StatePath)
 	case Destroy:
 		args = append(args, "-var-file="+t.paths.VarsPath, "-parallelism=4", "-auto-approve", "-state="+t.paths.StatePath)
+	case StateReplaceProvider:
+		args = append(args, "-auto-approve", "-state="+t.paths.StatePath)
 	}
 
-	args = append(args, t.paths.ConfigDir)
+	if command == StateReplaceProvider {
+		args = append(args, params...)
+	} else {
+		args = append(args, t.paths.ConfigDir)
+	}
 
 	log.Info("executing terraform", "command", command, "args", strings.Join(args[1:], " "))
 	tfCmd := exec.Command(TerraformBinary, args...)
@@ -291,6 +341,31 @@ func (t *Terraformer) isStateEmpty(ctx context.Context) (bool, error) {
 	}
 	data, ok := state.Data[tfStateKey]
 	return !ok || len(data) == 0, nil
+}
+
+func (t *Terraformer) getTerraformVersionFromState(ctx context.Context) (string, error) {
+	state := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      t.config.StateConfigMapName,
+			Namespace: t.config.Namespace,
+		},
+	}
+	if err := t.client.Get(ctx, client.ObjectKeyFromObject(state), state); client.IgnoreNotFound(err) != nil {
+		return "", err
+	}
+	data, ok := state.Data[tfStateKey]
+	if !ok || len(data) == 0 {
+		return "", nil
+	}
+	var terraformState map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &terraformState); err != nil {
+		return "", fmt.Errorf("could not unmarshal terraform state from JSON: %w", err)
+	}
+	terraformVersion, ok := terraformState[terraformVersionKey].(string)
+	if !ok {
+		return "", fmt.Errorf("terraform state key %s is not of type string", terraformVersionKey)
+	}
+	return terraformVersion, nil
 }
 
 func (t *Terraformer) terraformObjects() []client.Object {
