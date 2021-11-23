@@ -8,7 +8,7 @@ terraform {
 
 providers {
   aws = {
-    versions = ["3.63.0"]
+    versions = ["3.66.0"]
   }
   azurerm = {
     versions = ["2.68.0"]
