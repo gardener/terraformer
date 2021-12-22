@@ -1,5 +1,7 @@
 # Terraformer
 
+[![CI Build status](https://concourse.ci.gardener.cloud/api/v1/teams/gardener/pipelines/terraformer-master/jobs/master-head-update-job/badge)](https://concourse.ci.gardener.cloud/teams/gardener/pipelines/terraformer-master/jobs/master-head-update-job)
+
 Terraformer is a tool that can execute Terraform commands (`apply`, `destroy` and `validate`) and can be run as a Pod
 inside a Kubernetes cluster.
 The Terraform configuration and state files (`main.tf`, `variables.tf`, `terraform.tfvars` and `terraform.tfstate`)
