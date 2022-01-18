@@ -8,7 +8,7 @@ terraform {
 
 providers {
   alicloud = {
-    versions = ["1.124.2"]
+    versions = ["1.149.0"]
   }
   template = {
     versions = ["2.1.2"]
