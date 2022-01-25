@@ -160,8 +160,8 @@ var _ = Describe("Terraformer", func() {
 			It("should run Apply successfully", func() {
 				Expect(tf.Run(terraformer.Apply)).To(Succeed())
 				Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
-				Eventually(logBuffer).Should(gbytes.Say("args: init"))
-				Eventually(logBuffer).Should(gbytes.Say("args: apply"))
+				Eventually(logBuffer).Should(gbytes.Say("init"))
+				Eventually(logBuffer).Should(gbytes.Say("apply"))
 				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				testObjs.Refresh()
 				Expect(testObjs.ConfigurationConfigMap.Finalizers).To(ContainElement(terraformer.TerraformerFinalizer))
@@ -172,8 +172,8 @@ var _ = Describe("Terraformer", func() {
 			It("should run Destroy successfully", func() {
 				Expect(tf.Run(terraformer.Destroy)).To(Succeed())
 				Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
-				Eventually(logBuffer).Should(gbytes.Say("args: init"))
-				Eventually(logBuffer).Should(gbytes.Say("args: destroy"))
+				Eventually(logBuffer).Should(gbytes.Say("init"))
+				Eventually(logBuffer).Should(gbytes.Say("destroy"))
 				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				testObjs.Refresh()
 				Expect(testObjs.ConfigurationConfigMap.Finalizers).ToNot(ContainElement(terraformer.TerraformerFinalizer))
@@ -192,9 +192,9 @@ var _ = Describe("Terraformer", func() {
 			It("should run Validate successfully", func() {
 				Expect(tf.Run(terraformer.Validate)).To(Succeed())
 				Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
-				Eventually(logBuffer).Should(gbytes.Say("args: init"))
-				Eventually(logBuffer).Should(gbytes.Say("args: validate"))
-				Eventually(logBuffer).Should(gbytes.Say("args: plan"))
+				Eventually(logBuffer).Should(gbytes.Say("init"))
+				Eventually(logBuffer).Should(gbytes.Say("validate"))
+				Eventually(logBuffer).Should(gbytes.Say("plan"))
 				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				Expect(paths.TerminationMessagePath).To(testutils.BeEmptyFile())
 			})
@@ -250,7 +250,7 @@ var _ = Describe("Terraformer", func() {
 					Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 
 					Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-						ContainSubstring("args: init"),
+						ContainSubstring("init"),
 						ContainSubstring("some terraform error"),
 					)), "termination log should contain all terraform logs")
 				})
@@ -270,7 +270,7 @@ var _ = Describe("Terraformer", func() {
 				Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 
 				Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-					ContainSubstring("args: apply"),
+					ContainSubstring("apply"),
 					ContainSubstring("doing some long running IaaS ops"),
 					ContainSubstring("some terraform error"),
 				)), "termination log should contain all terraform logs")
@@ -289,7 +289,7 @@ var _ = Describe("Terraformer", func() {
 				Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 
 				Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-					ContainSubstring("args: destroy"),
+					ContainSubstring("destroy"),
 					ContainSubstring("doing some long running IaaS ops"),
 					ContainSubstring("some terraform error"),
 				)), "termination log should contain all terraform logs")
@@ -308,7 +308,7 @@ var _ = Describe("Terraformer", func() {
 				Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 
 				Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-					ContainSubstring("args: validate"),
+					ContainSubstring("validate"),
 					ContainSubstring("doing some long running IaaS ops"),
 					ContainSubstring("some terraform error"),
 				)), "termination log should contain all terraform logs")
@@ -336,8 +336,8 @@ var _ = Describe("Terraformer", func() {
 					Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 
 					Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-						Not(ContainSubstring("args: validate")),
-						ContainSubstring("args: plan"),
+						Not(ContainSubstring("validate")),
+						ContainSubstring("plan"),
 						ContainSubstring("doing some long running IaaS ops"),
 						ContainSubstring("some terraform error"),
 					)), "termination log should contain all terraform logs")
@@ -389,7 +389,7 @@ var _ = Describe("Terraformer", func() {
 				It("should run Apply successfully and execute the state replace-provider command", func() {
 					Expect(tf.Run(terraformer.Apply)).To(Succeed())
 					Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
-					Eventually(logBuffer).Should(gbytes.Say("args: state replace-provider"))
+					Eventually(logBuffer).Should(gbytes.Say("state replace-provider"))
 					Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 					testObjs.Refresh()
 					Expect(paths.TerminationMessagePath).To(testutils.BeEmptyFile())
@@ -397,7 +397,7 @@ var _ = Describe("Terraformer", func() {
 				It("should run Destroy successfully and execute the state replace-provider command", func() {
 					Expect(tf.Run(terraformer.Destroy)).To(Succeed())
 					Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
-					Eventually(logBuffer).Should(gbytes.Say("args: state replace-provider"))
+					Eventually(logBuffer).Should(gbytes.Say("state replace-provider"))
 					Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 					testObjs.Refresh()
 					Expect(paths.TerminationMessagePath).To(testutils.BeEmptyFile())
@@ -405,7 +405,7 @@ var _ = Describe("Terraformer", func() {
 				It("should run Validate successfully and execute the state replace-provider command", func() {
 					Expect(tf.Run(terraformer.Validate)).To(Succeed())
 					Eventually(logBuffer).Should(gbytes.Say("some terraform output"))
-					Eventually(logBuffer).Should(gbytes.Say("args: state replace-provider"))
+					Eventually(logBuffer).Should(gbytes.Say("state replace-provider"))
 					Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 					Expect(paths.TerminationMessagePath).To(testutils.BeEmptyFile())
 				})
@@ -448,7 +448,7 @@ var _ = Describe("Terraformer", func() {
 						Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 
 						Expect(paths.TerminationMessagePath).To(testutils.BeFileWithContents(And(
-							ContainSubstring("args: state replace-provider"),
+							ContainSubstring("state replace-provider"),
 							ContainSubstring("some terraform error"),
 						)), "termination log should contain all terraform logs")
 					})

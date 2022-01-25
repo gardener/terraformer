@@ -62,8 +62,11 @@ func main() {
 }
 
 func getCommand(args []string) string {
-	if len(args) < 1 {
+	if len(args) < 2 {
 		return ""
+	}
+	if strings.HasPrefix(args[0], "-chdir=") {
+		return args[1]
 	}
 	return args[0]
 }
