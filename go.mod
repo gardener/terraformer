@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/aws/aws-sdk-go v1.35.26
-	github.com/fsnotify/fsnotify v1.4.9
+	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gardener/gardener v1.17.1-0.20210222145700-bc28019dd75a
 	github.com/go-logr/logr v0.3.0
 	github.com/golang/mock v1.4.4-0.20200731163441-8734ec565a4d
