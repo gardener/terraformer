@@ -8,10 +8,10 @@ terraform {
 
 providers {
   google = {
-    versions = ["3.62.0"]
+    versions = ["4.19.0"]
   }
   google-beta = {
-    versions = ["3.62.0"]
+    versions = ["4.19.0"]
   }
   template = {
     versions = ["2.1.2"]
