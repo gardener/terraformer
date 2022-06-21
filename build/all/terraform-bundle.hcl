@@ -14,10 +14,10 @@ providers {
     versions = ["2.68.0"]
   }
   google = {
-    versions = ["3.62.0"]
+    versions = ["4.19.0"]
   }
   google-beta = {
-    versions = ["3.62.0"]
+    versions = ["4.19.0"]
   }
   openstack = {
     versions = ["1.37.0"]
