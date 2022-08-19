@@ -59,7 +59,7 @@ terraformer:
               PROVIDER: slim
     steps:
       verify:
-        image: 'golang:1.18.5'
+        image: 'golang:1.16.3'
   jobs:
     head-update:
       traits:
