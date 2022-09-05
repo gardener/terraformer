@@ -51,12 +51,22 @@ terraformer:
             target: terraformer
             build_args:
               PROVIDER: equinixmetal
+            resource_labels:
+            - name: 'cloud.gardener.cnudie/dso/scanning-hints/source_analysis/v1'
+              value:
+                policy: 'skip'
+                comment: only open source related component
           terraformer-slim:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-slim'
             target: terraformer
             build_args:
               PROVIDER: slim
+            resource_labels:
+            - name: 'cloud.gardener.cnudie/dso/scanning-hints/source_analysis/v1'
+              value:
+                policy: 'skip'
+                comment: local development/testing related component
     steps:
       verify:
         image: 'golang:1.16.15'
