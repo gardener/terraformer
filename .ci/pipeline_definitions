@@ -56,6 +56,10 @@ terraformer:
               value:
                 policy: 'skip'
                 comment: only open source related component
+            - name: 'cloud.gardener.cnudie/dso/scanning-hints/binary_id/v1'
+              value:
+                policy: 'skip'
+                comment: only open source related component
           terraformer-slim:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-slim'
@@ -64,6 +68,10 @@ terraformer:
               PROVIDER: slim
             resource_labels:
             - name: 'cloud.gardener.cnudie/dso/scanning-hints/source_analysis/v1'
+              value:
+                policy: 'skip'
+                comment: local development/testing related component
+            - name: 'cloud.gardener.cnudie/dso/scanning-hints/binary_id/v1'
               value:
                 policy: 'skip'
                 comment: local development/testing related component
