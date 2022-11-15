@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ############# golang-base
-FROM golang:1.16.15 AS golang-base
+FROM golang:1.19.3 AS golang-base
 
 ############# terraform-base
 FROM golang-base AS terraform-base
@@ -70,5 +70,3 @@ COPY --from=terraform-base /tmp/terraformer/tfproviders/ /terraform-providers/
 
 COPY vendor vendor
 COPY Makefile VERSION go.mod go.sum ./
-
-RUN make install-requirements

@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -59,6 +59,7 @@ func OverwriteExitCode(code string) Overwrite {
 
 // OverwriteExitCodeForCommands returns an overwrite that configures the binary to exit with the given code if it is
 // invoked with the given command. Example usage:
+//
 //	testutils.OverwriteExitCodeForCommands(
 //		"init", "0",
 //		"apply", "42",

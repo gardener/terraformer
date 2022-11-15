@@ -12,12 +12,13 @@ import (
 	"os"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/gardener/gardener/pkg/utils/test"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"k8s.io/apimachinery/pkg/util/clock"
+	"k8s.io/utils/clock"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/gardener/terraformer/pkg/terraformer"
@@ -483,12 +484,12 @@ var _ = Describe("Terraformer", func() {
 				resetVars()
 			})
 
-			It("should relay SIGINT to terraform process", func(done Done) {
+			It("should relay SIGINT to terraform process", func(ctx SpecContext) {
 				var wg sync.WaitGroup
 				wg.Add(2)
 				go func() {
 					wg.Wait()
-					close(done)
+					ctx.Done()
 				}()
 
 				go func() {
@@ -505,14 +506,14 @@ var _ = Describe("Terraformer", func() {
 
 				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				wg.Done()
-			}, 1)
+			}, NodeTimeout(time.Second*1))
 
-			It("should relay SIGTERM to terraform process", func(done Done) {
+			It("should relay SIGTERM to terraform process", func(ctx SpecContext) {
 				var wg sync.WaitGroup
 				wg.Add(2)
 				go func() {
 					wg.Wait()
-					close(done)
+					ctx.Done()
 				}()
 
 				go func() {
@@ -529,7 +530,7 @@ var _ = Describe("Terraformer", func() {
 
 				Eventually(logBuffer).Should(gbytes.Say("terraform process finished successfully"))
 				wg.Done()
-			}, 1)
+			}, NodeTimeout(time.Second*1))
 		})
 	})
 })

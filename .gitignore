@@ -3,6 +3,7 @@
 /tmp
 /local
 /dev
+/hack/tools/bin/
 /vendor/github.com/gardener/gardener/dev/
 .terraform
 .terraform.lock.hcl
