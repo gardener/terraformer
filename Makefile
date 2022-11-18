@@ -192,7 +192,7 @@ test-e2e:
 
 .PHONY: test-cov
 test-cov: $(SETUP_ENVTEST)
-	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/test-cover.sh ./cmd/... ./pkg/... ./test/e2e/binary/...
+	@$(REPO_ROOT)/hack/test-cover.sh ./cmd/... ./pkg/... ./test/e2e/binary/...
 
 .PHONY: test-cov-clean
 test-cov-clean: $(SETUP_ENVTEST)
