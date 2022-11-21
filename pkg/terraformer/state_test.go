@@ -209,10 +209,6 @@ var _ = Describe("Terraformer State", func() {
 			tf.StateUpdateQueue.Add(terraformer.FinalStateUpdateKey)
 			Eventually(logBuffer).Should(gbytes.Say("processing work item"))
 			Eventually(logBuffer).Should(gbytes.Say("error storing state"), "first attempt should fail")
-			Consistently(tf.FinalStateUpdateSucceeded).ShouldNot(Receive(), "should not signal that final state update succeeded")
-
-			By("observing retries")
-			Eventually(logBuffer).Should(gbytes.Say("processing work item"))
 			Eventually(tf.FinalStateUpdateSucceeded).Should(Receive(), "should signal that final state update succeeded")
 		})
 		It("should gracefully shutdown worker", func() {
