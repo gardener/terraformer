@@ -15,36 +15,90 @@ terraformer:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer'
             target: terraformer
+            resource_labels:
+            - name: 'gardener.cloud/cve-categorisation'
+              value:
+                network_exposure: 'protected'
+                authentication_enforced: false
+                user_interaction: 'gardener-operator'
+                confidentiality_requirement: 'high'
+                integrity_requirement: 'high'
+                availability_requirement: 'low'
           terraformer-alicloud:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-alicloud'
             target: terraformer
             build_args:
               PROVIDER: alicloud
+            resource_labels:
+            - name: 'gardener.cloud/cve-categorisation'
+              value:
+                network_exposure: 'protected'
+                authentication_enforced: false
+                user_interaction: 'gardener-operator'
+                confidentiality_requirement: 'high'
+                integrity_requirement: 'high'
+                availability_requirement: 'low'
           terraformer-aws:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-aws'
             target: terraformer
             build_args:
               PROVIDER: aws
+            resource_labels:
+            - name: 'gardener.cloud/cve-categorisation'
+              value:
+                network_exposure: 'protected'
+                authentication_enforced: false
+                user_interaction: 'gardener-operator'
+                confidentiality_requirement: 'high'
+                integrity_requirement: 'high'
+                availability_requirement: 'low'
           terraformer-azure:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-azure'
             target: terraformer
             build_args:
               PROVIDER: azure
+            resource_labels:
+            - name: 'gardener.cloud/cve-categorisation'
+              value:
+                network_exposure: 'protected'
+                authentication_enforced: false
+                user_interaction: 'gardener-operator'
+                confidentiality_requirement: 'high'
+                integrity_requirement: 'high'
+                availability_requirement: 'low'
           terraformer-gcp:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-gcp'
             target: terraformer
             build_args:
               PROVIDER: gcp
+            resource_labels:
+            - name: 'gardener.cloud/cve-categorisation'
+              value:
+                network_exposure: 'protected'
+                authentication_enforced: false
+                user_interaction: 'gardener-operator'
+                confidentiality_requirement: 'high'
+                integrity_requirement: 'high'
+                availability_requirement: 'low'
           terraformer-openstack:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-openstack'
             target: terraformer
             build_args:
               PROVIDER: openstack
+            resource_labels:
+            - name: 'gardener.cloud/cve-categorisation'
+              value:
+                network_exposure: 'protected'
+                authentication_enforced: false
+                user_interaction: 'gardener-operator'
+                confidentiality_requirement: 'high'
+                integrity_requirement: 'high'
+                availability_requirement: 'low'
           terraformer-equinixmetal:
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-equinixmetal'
