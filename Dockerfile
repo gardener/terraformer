@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ############# golang-base
-FROM golang:1.19.3 AS golang-base
+FROM golang:1.19.6 AS golang-base
 
 ############# terraform-base
 FROM golang-base AS terraform-base
