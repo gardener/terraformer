@@ -43,7 +43,7 @@ ARG PROVIDER=all
 RUN make install PROVIDER=$PROVIDER
 
 ############# terraformer
-FROM alpine:3.16.2 AS terraformer
+FROM alpine:3.17.2 AS terraformer
 
 # add additional packages that are required by provider plugins
 RUN apk add --update tzdata
