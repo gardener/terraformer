@@ -8,19 +8,19 @@ terraform {
 
 providers {
   aws = {
-    versions = ["3.66.0"]
+    versions = ["4.55.0"]
   }
   azurerm = {
-    versions = ["2.68.0"]
+    versions = ["3.44.0"]
   }
   google = {
-    versions = ["4.19.0"]
+    versions = ["4.53.1"]
   }
   google-beta = {
-    versions = ["4.19.0"]
+    versions = ["4.53.1"]
   }
   openstack = {
-    versions = ["1.37.0"]
+    versions = ["1.49.0"]
     source = "terraform-provider-openstack/openstack"
   }
   alicloud = {

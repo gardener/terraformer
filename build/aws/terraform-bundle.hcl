@@ -8,7 +8,7 @@ terraform {
 
 providers {
   aws = {
-    versions = ["3.66.0"]
+    versions = ["4.55.0"]
   }
   template = {
     versions = ["2.1.2"]

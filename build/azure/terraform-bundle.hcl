@@ -8,7 +8,7 @@ terraform {
 
 providers {
   azurerm = {
-    versions = ["2.68.0"]
+    versions = ["3.44.0"]
   }
   template = {
     versions = ["2.1.2"]
