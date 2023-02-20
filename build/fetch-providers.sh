@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-TF_VERSION="$(cat ./TF_VERSION)"
+TF_VERSION="0.15.5"
 function version { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; } # https://apple.stackexchange.com/a/123408/11374
 
 terraform-bundle \
