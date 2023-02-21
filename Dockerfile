@@ -9,48 +9,29 @@ FROM golang:1.19.6 AS golang-base
 ############# terraform-bundle
 FROM golang-base AS terraform-base
 
-# install unzip (needed for unzipping terraform provider plugins)
-RUN apt-get update && \
-    apt-get install -y unzip
-
 WORKDIR /tmp/terraformer
-COPY ./build/fetch-providers.sh .
 
 # overwrite to build provider-specific image
 ARG PROVIDER
 
+COPY build/fetch-providers.sh .
 # copy provider-specifc TF_VERSION
 COPY ./build/$PROVIDER/TF_VERSION .
 
-############# terraform-fetch
-FROM terraform-base as terraform-providers
+#RUN wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
+# echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list && \
+# sudo apt update && sudo apt install terraform
 
-# install terraform and needed provider plugins
-RUN mkdir -p /go/src/github.com/hashicorp && \
-    git clone --single-branch --depth 1 --branch v0.15.5 https://github.com/hashicorp/terraform.git /go/src/github.com/hashicorp/terraform && \
-    cd /go/src/github.com/hashicorp/terraform && \
-    go install ./tools/terraform-bundle
-
-# overwrite to build provider-specific image
-ARG PROVIDER
-
-# copy provider-specific terraform-bundle.hcl
-COPY ./build/$PROVIDER/terraform-bundle.hcl .
-RUN ./fetch-providers.sh
-
-############# terraform-runtime
-FROM terraform-base as terraform-runtime
-
-# overwrite to build provider-specific image
-ARG PROVIDER
-
-# copy provider-specifc TF_VERSION
-COPY ./build/$PROVIDER/TF_VERSION .
 
 RUN export TF_VERSION=$(cat ./TF_VERSION) && mkdir -p /go/src/github.com/hashicorp && \
     git clone --single-branch --depth 1 --branch v${TF_VERSION} https://github.com/hashicorp/terraform.git /go/src/github.com/hashicorp/terraform && \
     cd /go/src/github.com/hashicorp/terraform && \
-    go install .
+    CGO_ENABLED=0 go install
+
+# copy provider-specific terraform-bundle.hcl
+COPY ./build/$PROVIDER/terraform-bundle.hcl ./main.tf
+#RUN fetch-providers.sh
+RUN mkdir tfproviders && terraform providers mirror tfproviders
 
 ############# builder
 FROM golang-base AS builder
@@ -73,9 +54,9 @@ WORKDIR /
 ENV TF_DEV=true
 ENV TF_RELEASE=true
 
-COPY hack/terraform.rc /.terraform.rc
-COPY --from=terraform-providers /tmp/terraformer/tfproviders/ /terraform-providers/
-COPY --from=terraform-runtime /go/bin/terraform /bin/terraform
+COPY build/terraform.rc /.terraform.rc
+COPY --from=terraform-base /tmp/terraformer/tfproviders/ /terraform-providers/
+COPY --from=terraform-base /go/bin/terraform /bin/terraform
 COPY --from=builder /go/bin/terraformer /
 
 ENTRYPOINT ["/terraformer"]
@@ -86,9 +67,9 @@ FROM golang-base AS dev
 WORKDIR /go/src/github.com/gardener/terraformer
 VOLUME /go/src/github.com/gardener/terraformer
 
-COPY hack/terraform.rc ./.terraform.rc
-COPY --from=terraform-providers /tmp/terraformer/tfproviders/ /terraform-providers/
-COPY --from=terraform-runtime /go/bin/terraform /bin/terraform
+COPY build/terraform.rc ./.terraform.rc
+COPY --from=terraform-base /tmp/terraformer/tfproviders/ /terraform-providers/
+COPY --from=terraform-base /go/bin/terraform /bin/terraform
 
 COPY vendor vendor
 COPY Makefile VERSION go.mod go.sum ./

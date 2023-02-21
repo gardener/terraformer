@@ -3,4 +3,9 @@ provider_installation {
     path    = "/terraform-providers"
     include = ["*/*/*"]
   }
+
+  direct {
+    # disallow any provider downloading
+    exclude = ["*/*/*"]
+  }
 }

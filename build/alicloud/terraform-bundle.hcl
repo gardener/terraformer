@@ -3,17 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 terraform {
-  version = "TF_VERSION"
-}
-
-providers {
-  alicloud = {
-    versions = ["1.149.0"]
-  }
-  template = {
-    versions = ["2.1.2"]
-  }
-  null = {
-    versions = ["2.1.2"]
+  required_providers {
+    alicloud = {
+      version = "1.149.0"
+    }
+    template = {
+      version = "2.1.2"
+    }
+    null = {
+      version = "3.2.1"
+    }
   }
 }
