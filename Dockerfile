@@ -14,7 +14,6 @@ WORKDIR /tmp/terraformer
 # overwrite to build provider-specific image
 ARG PROVIDER
 
-COPY build/fetch-providers.sh .
 # copy provider-specifc TF_VERSION
 COPY ./build/$PROVIDER/TF_VERSION .
 
@@ -30,7 +29,8 @@ RUN export TF_VERSION=$(cat ./TF_VERSION) && mkdir -p /go/src/github.com/hashico
 
 # copy provider-specific terraform-bundle.hcl
 COPY ./build/$PROVIDER/terraform-bundle.hcl ./main.tf
-#RUN fetch-providers.sh
+
+# fetch providers locally
 RUN mkdir tfproviders && terraform providers mirror tfproviders
 
 ############# builder
@@ -54,7 +54,8 @@ WORKDIR /
 ENV TF_DEV=true
 ENV TF_RELEASE=true
 
-COPY build/terraform.rc /.terraform.rc
+COPY build/tf_cli_config.tfrc /
+ENV TF_CLI_CONFIG_FILE="/tf_cli_config.tfrc"
 COPY --from=terraform-base /tmp/terraformer/tfproviders/ /terraform-providers/
 COPY --from=terraform-base /go/bin/terraform /bin/terraform
 COPY --from=builder /go/bin/terraformer /
@@ -67,7 +68,7 @@ FROM golang-base AS dev
 WORKDIR /go/src/github.com/gardener/terraformer
 VOLUME /go/src/github.com/gardener/terraformer
 
-COPY build/terraform.rc ./.terraform.rc
+COPY build/tf_cli_config.tfrc ./.terraform.rc
 COPY --from=terraform-base /tmp/terraformer/tfproviders/ /terraform-providers/
 COPY --from=terraform-base /go/bin/terraform /bin/terraform
 
