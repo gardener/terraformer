@@ -3,12 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 terraform {
-  version = "TF_VERSION"
-}
-
-providers {
-  metal = {
-    versions = ["3.1.0"]
-    source = "equinix/metal"
+  required_providers {
+    metal = {
+      version = "3.1.0"
+      source = "equinix/metal"
+    }
   }
 }

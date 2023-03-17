@@ -3,37 +3,35 @@
 # SPDX-License-Identifier: Apache-2.0
 
 terraform {
-  version = "TF_VERSION"
-}
-
-providers {
-  aws = {
-    versions = ["3.66.0"]
-  }
-  azurerm = {
-    versions = ["2.68.0"]
-  }
-  google = {
-    versions = ["4.19.0"]
-  }
-  google-beta = {
-    versions = ["4.19.0"]
-  }
-  openstack = {
-    versions = ["1.37.0"]
-    source = "terraform-provider-openstack/openstack"
-  }
-  alicloud = {
-    versions = ["1.149.0"]
-  }
-  metal = {
-    versions = ["3.1.0"]
-    source = "equinix/metal"
-  }
-  template = {
-    versions = ["2.1.2"]
-  }
-  null = {
-    versions = ["2.1.2"]
+  required_providers {
+    aws = {
+      version = "4.55.0"
+    }
+    azurerm = {
+      version = "3.44.0"
+    }
+    google = {
+      version = "4.53.1"
+    }
+    google-beta = {
+      version = "4.53.1"
+    }
+    openstack = {
+      version = "1.49.0"
+      source   = "terraform-provider-openstack/openstack"
+    }
+    alicloud = {
+      version = "1.149.0"
+    }
+    metal = {
+      version = "3.1.0"
+      source   = "equinix/metal"
+    }
+    template = {
+      version = "2.1.2"
+    }
+    null = {
+      version = "3.2.1"
+    }
   }
 }

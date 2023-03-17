@@ -3,20 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 terraform {
-  version = "TF_VERSION"
-}
-
-providers {
-  google = {
-    versions = ["4.19.0"]
-  }
-  google-beta = {
-    versions = ["4.19.0"]
-  }
-  template = {
-    versions = ["2.1.2"]
-  }
-  null = {
-    versions = ["2.1.2"]
+  required_providers {
+    google = {
+      version = "4.53.1"
+    }
+    google-beta = {
+      version = "4.53.1"
+    }
+    null = {
+      version = "3.2.1"
+    }
   }
 }
