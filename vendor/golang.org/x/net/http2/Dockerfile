@@ -26,7 +26,8 @@ RUN apt-get install -y --no-install-recommends make binutils \
 
 # Note: setting NGHTTP2_VER before the git clone, so an old git clone isn't cached:
 ENV NGHTTP2_VER 895da9a
-RUN cd /root && git clone https://github.com/tatsuhiro-t/nghttp2.git
+WORKDIR /root 
+RUN  git clone https://github.com/tatsuhiro-t/nghttp2.git
 
 WORKDIR /root/nghttp2
 RUN git reset --hard $NGHTTP2_VER
