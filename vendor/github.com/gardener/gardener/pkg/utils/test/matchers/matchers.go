@@ -1,4 +1,4 @@
-// Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// Copyright 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ package matchers
 import (
 	"errors"
 
-	kcache "github.com/gardener/gardener/pkg/client/kubernetes/cache"
 	"github.com/onsi/gomega/format"
 	"github.com/onsi/gomega/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	kubernetescache "github.com/gardener/gardener/pkg/client/kubernetes/cache"
 )
 
 func init() {
@@ -124,9 +125,18 @@ func BeInvalidError() types.GomegaMatcher {
 func BeCacheError() types.GomegaMatcher {
 	return &kubernetesErrors{
 		checkFunc: func(err error) bool {
-			cacheErr := &kcache.CacheError{}
+			cacheErr := &kubernetescache.CacheError{}
 			return errors.As(err, &cacheErr)
 		},
 		message: "",
+	}
+}
+
+// ShareSameReferenceAs checks if objects shares the same underlying reference as the passed object.
+// This can be used to check if maps or slices have the same underlying data store.
+// Only objects that work for 'reflect.ValueOf(x).Pointer' can be compared.
+func ShareSameReferenceAs(expected interface{}) types.GomegaMatcher {
+	return &referenceMatcher{
+		expected: expected,
 	}
 }
