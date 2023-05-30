@@ -10,7 +10,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/utils/clock"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

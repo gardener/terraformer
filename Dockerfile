@@ -4,7 +4,7 @@
 
 ############# golang-base
 ARG PROVIDER=all
-FROM golang:1.19.6 AS golang-base
+FROM golang:1.20.4 AS golang-base
 
 ############# terraform-bundle
 FROM golang-base AS terraform-base
@@ -44,7 +44,7 @@ ARG PROVIDER
 RUN make install PROVIDER=$PROVIDER
 
 ############# terraformer
-FROM alpine:3.17.3 AS terraformer
+FROM alpine:3.18.0 AS terraformer
 
 # add additional packages that are required by provider plugins
 RUN apk add --update tzdata

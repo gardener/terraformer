@@ -27,7 +27,6 @@ ACCESS_KEY_ID_FILE     := .kube-secrets/aws/access_key_id.secret
 SECRET_ACCESS_KEY_FILE := .kube-secrets/aws/secret_access_key.secret
 
 TOOLS_DIR := hack/tools
-GOLANGCI_LINT_VERSION := v1.50.0
 include vendor/github.com/gardener/gardener/hack/tools.mk
 
 #########################################
@@ -169,7 +168,7 @@ generate: $(MOCKGEN)
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/generate.sh ./cmd/... ./pkg/... ./test/...
 
 .PHONY: format
-format: $(GOIMPORTS)
+format: $(GOIMPORTS) $(GOIMPORTSREVISER)
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/format.sh ./cmd ./pkg ./test
 
 .PHONY: test

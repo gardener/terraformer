@@ -1,4 +1,4 @@
-// Copyright (c) 2022 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// Copyright 2022 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
 package matchers
 
 import (
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
+
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 )
 
 // ContainCondition returns a matchers for checking whether a condition is contained.
@@ -51,6 +51,24 @@ func WithReason(reason string) gomegatypes.GomegaMatcher {
 // WithMessage returns a matcher for checking whether a condition has a certain message.
 func WithMessage(message string) gomegatypes.GomegaMatcher {
 	return gstruct.MatchFields(gstruct.IgnoreExtras, gstruct.Fields{
-		"Message": Equal(message),
+		"Message": ContainSubstring(message),
+	})
+}
+
+// WithCodes returns a matcher for checking whether a condition contains certain error codes.
+func WithCodes(codes ...gardencorev1beta1.ErrorCode) gomegatypes.GomegaMatcher {
+	return gstruct.MatchFields(gstruct.IgnoreExtras, gstruct.Fields{
+		"Codes": ContainElements(codes),
+	})
+}
+
+// WithMessageSubstrings returns a matcher for checking whether a condition's message contains certain substrings.
+func WithMessageSubstrings(messages ...string) gomegatypes.GomegaMatcher {
+	var substringMatchers = make([]gomegatypes.GomegaMatcher, 0, len(messages))
+	for _, message := range messages {
+		substringMatchers = append(substringMatchers, ContainSubstring(message))
+	}
+	return gstruct.MatchFields(gstruct.IgnoreExtras, gstruct.Fields{
+		"Message": SatisfyAll(substringMatchers...),
 	})
 }
