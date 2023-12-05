@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 NAME                 := terraformer
-IMAGE_REPOSITORY     := eu.gcr.io/gardener-project/gardener/$(NAME)
+IMAGE_REPOSITORY     := europe-docker.pkg.dev/gardener-project/public/gardener/$(NAME)
 IMAGE_REPOSITORY_DEV := $(IMAGE_REPOSITORY)/dev
 REPO_ROOT            := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 VERSION              := $(shell cat "$(REPO_ROOT)/VERSION")

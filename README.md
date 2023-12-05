@@ -154,7 +154,7 @@ Running Suite: Terraformer Pod E2E Suite
 ## Docker Images
 
 Terraformer images are built with every pipeline run and pushed to a public GCR repository.
-The list of existing images and tags can be found in [eu.gcr.io/gardener-project/gardener](https://eu.gcr.io/gardener-project/gardener).
+The list of existing images and tags can be found in [europe-docker.pkg.dev/gardener-project/public/gardener](https://europe-docker.pkg.dev/gardener-project/public/gardener).
 
 ### Image variants
 
@@ -173,8 +173,8 @@ With the different image variants, Gardener provider extensions can now deploy t
 plugins inside. Also, the different extensions don't have to agree on a common terraform version, but are able to choose
 the terraform version which they want to use in their provider-specific image.
 
-The `all` image variant is tagged as `eu.gcr.io/gardener-project/gardener/terraformer`, while the provider-specific
-image variants are tagged as `eu.gcr.io/gardener-project/gardener/terraformer-{aws,gcp,...}`.
+The `all` image variant is tagged as `europe-docker.pkg.dev/gardener-project/public/gardener/terraformer`, while the provider-specific
+image variants are tagged as `europe-docker.pkg.dev/gardener-project/public/gardener/terraformer-{aws,gcp,...}`.
 
 ### Building images locally
 

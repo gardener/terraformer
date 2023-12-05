@@ -4,13 +4,15 @@ terraformer:
       version:
         preprocess: 'inject-commit-hash'
         inject_effective_version: true
+      component_descriptor:
+        ocm_repository: europe-docker.pkg.dev/gardener-project/snapshots
       options:
         public_build_logs: true
       publish:
         oci-builder: 'docker-buildx'
         dockerimages:
           terraformer:
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer'
+            image: europe-docker.pkg.dev/gardener-project/snapshots/gardener/terraformer
             target: terraformer
             resource_labels:
             - name: 'gardener.cloud/cve-categorisation'
@@ -22,7 +24,7 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-alicloud:
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer-alicloud'
+            image: europe-docker.pkg.dev/gardener-project/snapshots/gardener/terraformer-alicloud
             target: terraformer
             build_args:
               PROVIDER: alicloud
@@ -36,7 +38,7 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-aws:
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer-aws'
+            image: europe-docker.pkg.dev/gardener-project/snapshots/gardener/terraformer-aws
             target: terraformer
             build_args:
               PROVIDER: aws
@@ -50,7 +52,7 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-azure:
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer-azure'
+            image: europe-docker.pkg.dev/gardener-project/snapshots/gardener/terraformer-azure
             target: terraformer
             build_args:
               PROVIDER: azure
@@ -64,7 +66,7 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-gcp:
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer-gcp'
+            image: europe-docker.pkg.dev/gardener-project/snapshots/gardener/terraformer-gcp
             target: terraformer
             build_args:
               PROVIDER: gcp
@@ -78,7 +80,7 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-openstack:
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer-openstack'
+            image: europe-docker.pkg.dev/gardener-project/snapshots/gardener/terraformer-openstack
             target: terraformer
             build_args:
               PROVIDER: openstack
@@ -92,7 +94,7 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-equinixmetal:
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer-equinixmetal'
+            image: europe-docker.pkg.dev/gardener-project/snapshots/gardener/terraformer-equinixmetal
             target: terraformer
             build_args:
               PROVIDER: equinixmetal
@@ -106,7 +108,7 @@ terraformer:
                 policy: 'skip'
                 comment: only open source related component
           terraformer-slim:
-            image: 'eu.gcr.io/gardener-project/gardener/terraformer-slim'
+            image: europe-docker.pkg.dev/gardener-project/snapshots/gardener/terraformer-slim
             target: terraformer
             build_args:
               PROVIDER: slim
@@ -123,7 +125,9 @@ terraformer:
     head-update:
       traits:
         draft_release: ~
-        component_descriptor: ~
+        component_descriptor:
+          ocm_repository_mappings:
+            - repository: europe-docker.pkg.dev/gardener-project/releases
     pull-request:
       traits:
         pull-request: ~
@@ -138,6 +142,8 @@ terraformer:
       traits:
         version:
           preprocess: 'finalize'
+        component_descriptor:
+          ocm_repository: europe-docker.pkg.dev/gardener-project/releases
         release:
           nextversion: 'bump_minor'
         slack:
@@ -146,9 +152,23 @@ terraformer:
             internal_scp_workspace:
               channel_name: 'C9CEBQPGE' #sap-tech-gardener
               slack_cfg_name: 'scp_workspace'
-        component_descriptor: ~
         publish:
           oci-builder: 'docker-buildx'
           dockerimages:
             terraformer:
+              image: europe-docker.pkg.dev/gardener-project/releases/gardener/terraformer
               tag_as_latest: true
+            terraformer-alicloud:
+              image: europe-docker.pkg.dev/gardener-project/releases/gardener/terraformer-alicloud
+            terraformer-aws:
+              image: europe-docker.pkg.dev/gardener-project/releases/gardener/terraformer-aws
+            terraformer-azure:
+              image: europe-docker.pkg.dev/gardener-project/releases/gardener/terraformer-azure
+            terraformer-gcp:
+              image: europe-docker.pkg.dev/gardener-project/releases/gardener/terraformer-gcp
+            terraformer-openstack:
+              image: europe-docker.pkg.dev/gardener-project/releases/gardener/terraformer-openstack
+            terraformer-equinixmetal:
+              image: europe-docker.pkg.dev/gardener-project/releases/gardener/terraformer-equinixmetal
+            terraformer-slim:
+              image: europe-docker.pkg.dev/gardener-project/releases/gardener/terraformer-slim

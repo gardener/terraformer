@@ -39,7 +39,7 @@ const (
 	keyAccessKeyID          = "accessKeyID"
 	keySecretAccessKey      = "secretAccessKey"
 
-	terraformerImage = "eu.gcr.io/gardener-project/gardener/terraformer-aws"
+	terraformerImage = "europe-docker.pkg.dev/gardener-project/public/gardener/terraformer-aws"
 )
 
 var (
