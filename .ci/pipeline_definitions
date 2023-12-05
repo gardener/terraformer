@@ -1,7 +1,5 @@
 terraformer:
-  template: 'default'
   base_definition:
-    repo: ~
     traits:
       version:
         preprocess: 'inject-commit-hash'
@@ -12,7 +10,6 @@ terraformer:
         oci-builder: 'kaniko'
         dockerimages:
           terraformer:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer'
             target: terraformer
             resource_labels:
@@ -25,7 +22,6 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-alicloud:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-alicloud'
             target: terraformer
             build_args:
@@ -40,7 +36,6 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-aws:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-aws'
             target: terraformer
             build_args:
@@ -55,7 +50,6 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-azure:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-azure'
             target: terraformer
             build_args:
@@ -70,7 +64,6 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-gcp:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-gcp'
             target: terraformer
             build_args:
@@ -85,7 +78,6 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-openstack:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-openstack'
             target: terraformer
             build_args:
@@ -100,7 +92,6 @@ terraformer:
                 integrity_requirement: 'high'
                 availability_requirement: 'low'
           terraformer-equinixmetal:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-equinixmetal'
             target: terraformer
             build_args:
@@ -115,7 +106,6 @@ terraformer:
                 policy: 'skip'
                 comment: only open source related component
           terraformer-slim:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/terraformer-slim'
             target: terraformer
             build_args:
