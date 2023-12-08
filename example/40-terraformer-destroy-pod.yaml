@@ -12,7 +12,7 @@ spec:
   activeDeadlineSeconds: 1800
   containers:
   - name: terraform
-    image: eu.gcr.io/gardener-project/gardener/terraformer:v2.6.0
+    image: europe-docker.pkg.dev/gardener-project/public/gardener/terraformer:v2.6.0
     imagePullPolicy: IfNotPresent
     command:
     - /terraformer
