@@ -21,7 +21,7 @@ terraform {
       source   = "terraform-provider-openstack/openstack"
     }
     alicloud = {
-      version = "1.149.0"
+      version = "1.213.0"
     }
     metal = {
       version = "3.1.0"

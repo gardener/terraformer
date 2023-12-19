@@ -5,7 +5,7 @@
 terraform {
   required_providers {
     alicloud = {
-      version = "1.149.0"
+      version = "1.213.0"
     }
     template = {
       version = "2.1.2"
