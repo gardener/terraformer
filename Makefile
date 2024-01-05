@@ -174,7 +174,6 @@ format: $(GOIMPORTS) $(GOIMPORTSREVISER)
 .PHONY: test
 test: $(SETUP_ENVTEST)
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/test-integration.sh ./cmd/... ./pkg/... ./test/e2e/binary/...
-	# @$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/test-integration.sh ./cmd/... ./pkg/... ./test/e2e/binary/...
 
 .PHONY: test-e2e
 test-e2e:
