@@ -1,5 +1,6 @@
 # Terraformer
 
+[![REUSE status](https://api.reuse.software/badge/github.com/gardener/terraformer)](https://api.reuse.software/info/github.com/gardener/terraformer)
 [![CI Build status](https://concourse.ci.gardener.cloud/api/v1/teams/gardener-tests/pipelines/terraformer-master/jobs/master-head-update-job/badge)](https://concourse.ci.gardener.cloud/teams/gardener-tests/pipelines/terraformer-master/jobs/master-head-update-job)
 
 Terraformer is a tool that can execute Terraform commands (`apply`, `destroy` and `validate`) and can be run as a Pod
