@@ -45,7 +45,11 @@ func main() {
 	url := fmt.Sprintf("https://%s", kubernetesServiceHost)
 	for {
 		if err := checkNetworkConnectivity(url); err != nil {
-			fmt.Printf("network connectivity check failed: %v. Retrying in 5 seconds...\n", err)
+			if log := runtimelog.Log; log.Enabled() {
+				log.Error(err, "Network connectivity check failed.  Retrying in 5 seconds...")
+			} else {
+				fmt.Printf("Network connectivity check failed: %v. Retrying in 5 seconds...\n", err)
+			}
 			time.Sleep(5 * time.Second)
 			continue
 		}
