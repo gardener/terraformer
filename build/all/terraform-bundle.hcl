@@ -8,7 +8,7 @@ terraform {
       version = "4.55.0"
     }
     azurerm = {
-      version = "3.44.0"
+      version = "3.47.0"
     }
     google = {
       version = "4.53.1"
