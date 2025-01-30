@@ -330,7 +330,7 @@ func createOrUpdateRole(ctx context.Context) error {
 		role.Rules = []rbacv1.PolicyRule{{
 			APIGroups: []string{""},
 			Resources: []string{"configmaps", "secrets"},
-			Verbs:     []string{"*"},
+			Verbs:     []string{"create", "get", "list", "watch", "patch", "update"},
 		}}
 		return nil
 	})
