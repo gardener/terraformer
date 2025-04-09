@@ -183,19 +183,17 @@ You can use `make docker-images` to build all image variants locally.
 
 Alternatively, `make docker-image PROVIDER={all,aws,gcp,...}` can be used to build only one specific image variant.
 
-## Find out more & Get in touch!
+## Feedback and Support
+
+Feedback and contributions are always welcome!
+
+Please report bugs or suggestions as [GitHub issues](https://github.com/gardener/terraformer/issues) or reach out on [Slack](https://gardener-cloud.slack.com/) (join the workspace [here](https://gardener.cloud/community/community-bio/)).
+
+## Learn more!
 
 Terraformer was presented in the Gardener Community Call on Nov, 13th 2020.  
 Watch the [recording](https://youtu.be/4sQs_Hj6xpY) to learn the story behind terraformer v2 and how it is used
 in our provider extensions!
-
-Feedback and contributions are always welcome!
-
-Reach out to us:
-- via our [Slack channel](https://kubernetes.slack.com/messages/gardener), get an invite [here](http://slack.k8s.io/)
-- on our [Mailing List](https://groups.google.com/forum/?fromgroups#!forum/gardener)
-- on Twitter [@GardenerProject](https://twitter.com/GardenerProject)
-- in our bi-weekly [Community Call](https://github.com/gardener/documentation/blob/master/CONTRIBUTING.md#weekly-meeting)
 
 Please find further resources about our project here:
 
