@@ -57,8 +57,8 @@ func (c *ConfigMapStore) Read(key string) (io.Reader, error) {
 
 // Store reads from the given reader and stores the contents under the given key in the ConfigMap.
 func (c *ConfigMapStore) Store(key string, data io.Reader) error {
-	if c.ConfigMap.Data == nil {
-		c.ConfigMap.Data = make(map[string]string, 1)
+	if c.Data == nil {
+		c.Data = make(map[string]string, 1)
 	}
 
 	buf := &bytes.Buffer{}
@@ -67,7 +67,7 @@ func (c *ConfigMapStore) Store(key string, data io.Reader) error {
 		return err
 	}
 
-	c.ConfigMap.Data[key] = buf.String()
+	c.Data[key] = buf.String()
 	return nil
 }
 
@@ -95,8 +95,8 @@ func (s *SecretStore) Read(key string) (io.Reader, error) {
 
 // Store reads from the given reader and stores the contents under the given key in the Secret.
 func (s *SecretStore) Store(key string, data io.Reader) error {
-	if s.Secret.Data == nil {
-		s.Secret.Data = make(map[string][]byte, 1)
+	if s.Data == nil {
+		s.Data = make(map[string][]byte, 1)
 	}
 
 	buf := &bytes.Buffer{}
@@ -105,6 +105,6 @@ func (s *SecretStore) Store(key string, data io.Reader) error {
 		return err
 	}
 
-	s.Secret.Data[key] = buf.Bytes()
+	s.Data[key] = buf.Bytes()
 	return nil
 }
