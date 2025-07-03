@@ -1,0 +1,46 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      next-version:
+        type: choice
+        options:
+          - bump-minor
+          - bump-patch
+
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yaml
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+    with:
+      mode: release
+
+  integrationtest:
+    needs:
+      - build
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/run-integrationtests.yaml
+    with:
+      image-tag: ${{ needs.build.outputs.version }}
+
+  release-to-github-and-bump:
+    uses: gardener/cc-utils/.github/workflows/release.yaml@master
+    needs:
+      - build
+      - integrationtest
+    secrets: inherit
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+    with:
+      release-commit-target: branch
+      next-version: ${{ inputs.next-version }}
+      next-version-callback-action-path:
+      slack-channel-id:

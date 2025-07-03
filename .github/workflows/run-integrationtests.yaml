@@ -1,0 +1,26 @@
+name: Integration-Tests
+description: |
+  Runs Integrationtests using TestMachinery
+
+on:
+  workflow_call:
+    inputs:
+      image-tag:
+        required: true
+        type: string
+
+jobs:
+  integrationtest:
+    permissions:
+      id-token: write
+      contents: read
+    uses: gardener/cc-utils/.github/workflows/run-testmachinery-tests.yaml@master
+    with:
+      test-command: |
+        ${testrunner_run} \
+         --no-execution-group \
+         --testrun-prefix terraformer-pod-e2e- \
+         --timeout=1800 \
+         --testruns-chart-path=.ci/testruns/default \
+         --set revision=$(git rev-parse @) \
+         --set imageTag='${{ inputs.image-tag }}'
