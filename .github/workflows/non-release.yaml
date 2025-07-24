@@ -1,0 +1,34 @@
+name: Build
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yaml
+    with:
+      mode: snapshot
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+  integrationtest:
+    needs:
+      - build
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/run-integrationtests.yaml
+    with:
+      image-tag: ${{ needs.build.outputs.version }}
+
+  component-descriptor:
+    uses: gardener/cc-utils/.github/workflows/post-build.yaml@master
+    needs:
+      - build
+    secrets: inherit
+    permissions:
+      id-token: write
+      contents: write
