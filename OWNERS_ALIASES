@@ -1,0 +1,27 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
+aliases:
+  terraformer-reviewers:
+  - AndreasBurger
+  - EmoinLanyu
+  - hebelsan
+  - jia-jerry
+  - kevin-lacoo
+  - kon-angelo
+  - MartinWeindel
+  - matthias-horne
+  - rfranzke
+  - shaoyongfeng
+  - wpross
+  terraformer-approvers:
+  - AndreasBurger
+  - EmoinLanyu
+  - hebelsan
+  - jia-jerry
+  - kevin-lacoo
+  - kon-angelo
+  - MartinWeindel
+  - matthias-horne
+  - rfranzke
+  - shaoyongfeng
+  - wpross
