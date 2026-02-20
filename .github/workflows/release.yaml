@@ -42,5 +42,3 @@ jobs:
     with:
       release-commit-target: branch
       next-version: ${{ inputs.next-version }}
-      next-version-callback-action-path:
-      slack-channel-id:
