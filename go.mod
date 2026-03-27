@@ -8,7 +8,7 @@ toolchain go1.24.1
 require (
 	github.com/aws/aws-sdk-go v1.55.7
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/gardener/gardener v1.117.0
+	github.com/gardener/gardener v1.117.5
 	github.com/go-logr/logr v1.4.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/onsi/ginkgo/v2 v2.23.4
