@@ -25,7 +25,7 @@ jobs:
       image-tag: ${{ needs.build.outputs.version }}
 
   component-descriptor:
-    uses: gardener/cc-utils/.github/workflows/post-build.yaml@master
+    uses: gardener/cc-utils/.github/workflows/post-build.yaml@v1
     needs:
       - build
     permissions:
