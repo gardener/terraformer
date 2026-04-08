@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ vars.DEFAULT_RUNNER || 'ubuntu-latest' }}
     steps:
     - name: install-gardener-gha-libs
-      uses: gardener/cc-utils/.github/actions/install-gardener-gha-libs@master
+      uses: gardener/cc-utils/.github/actions/install-gardener-gha-libs@v1
 
     - name: raise-on-malformed-release-notes
       shell: python
